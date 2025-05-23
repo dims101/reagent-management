@@ -11,11 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('role_assigntments', function (Blueprint $table) {
-            $table->increments('id');
-            $table->bigInteger('user_id')->nullable();
-            $table->bigInteger('role_id')->nullable();
-            $table->timestampTz('assigntment_date')->nullable();
+        Schema::table('approvals', function (Blueprint $table) {
+            $table->foreign(['dept_id'], 'approvals_fk2')->references(['id'])->on('departments')->onUpdate('no action')->onDelete('no action');
         });
     }
 
@@ -24,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('role_assigntments');
+        Schema::table('approvals', function (Blueprint $table) {
+            $table->dropForeign('approvals_fk2');
+        });
     }
 };

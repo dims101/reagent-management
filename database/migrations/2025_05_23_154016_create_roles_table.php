@@ -15,6 +15,7 @@ return new class extends Migration
             $table->increments('id');
             $table->string('name', 10)->nullable();
             $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 

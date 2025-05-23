@@ -6,7 +6,7 @@
                     <img src="../assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
                 </div>
                 <div class="info">
-                    <a href="#collapseExample" aria-expanded="true">
+                    <a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
                         <span>
                             Hizrian
                             <span class="user-level">Administrator</span>
@@ -18,7 +18,7 @@
                     <div class="collapse in" id="collapseExample">
                         <ul class="nav">
                             <li>
-                                <a href="">
+                                <a href="#">
                                     <span class="link-collapse">Change Password</span>
                                 </a>
                             </li>
@@ -27,20 +27,20 @@
                 </div>
             </div>
             <ul class="nav nav-primary">
-                <li class="nav-item">
-                    <a href="{{ route('dashboard') }}" wire:navigate.hover wire:current="text-primary">
+                <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard') }}" wire:navigate>
                         <i class="fas fa-home"></i>
                         <p>Dashboard</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ route('create-stock') }}" wire:navigate.hover>
+                <li class="nav-item {{ request()->routeIs('create-stock') ? 'active' : '' }}">
+                    <a href="{{ route('create-stock') }}" wire:navigate>
                         <i class="fas fa-layer-group"></i>
                         <p>Input Stock</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="{{ route('self-stock') }}" wire:navigate.hover>
+                <li class="nav-item {{ request()->routeIs('self-stock') ? 'active' : '' }}">
+                    <a href="{{ route('self-stock') }}" wire:navigate>
                         <i class="fas fa-th-list"></i>
                         <p>Stock On Hand</p>
                     </a>

@@ -11,12 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departements', function (Blueprint $table) {
+        Schema::create('role_assignments', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name')->nullable();
-            $table->bigInteger('pic_id')->nullable();
-            $table->bigInteger('manager_id')->nullable();
-            $table->timestampTz('created_at')->nullable();
+            $table->bigInteger('user_id')->nullable();
+            $table->bigInteger('role_id')->nullable();
+            $table->timestampTz('assignment_date')->nullable();
+            $table->softDeletesTz();
         });
     }
 
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departements');
+        Schema::dropIfExists('role_assignments');
     }
 };

@@ -14,12 +14,13 @@ return new class extends Migration
         Schema::create('requests', function (Blueprint $table) {
             $table->bigInteger('request_no')->primary();
             $table->bigInteger('reagent_id')->nullable();
-            $table->string('request_qty')->nullable();
+            $table->decimal('request_qty', 10)->nullable();
             $table->string('purpose', 200)->nullable();
             $table->bigInteger('requested_by')->nullable();
-            $table->timestampTz('created_at')->nullable();
             $table->bigInteger('approval_id')->nullable();
             $table->string('status', 50)->nullable();
+            $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 

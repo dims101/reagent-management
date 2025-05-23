@@ -21,6 +21,7 @@ return new class extends Migration
             $table->timestampTz('expected_date')->nullable();
             $table->string('status', 20)->nullable();
             $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 

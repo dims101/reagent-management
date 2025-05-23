@@ -17,9 +17,10 @@ return new class extends Migration
             $table->bigInteger('dept_id')->nullable();
             $table->bigInteger('assigned_pic_id')->nullable();
             $table->date('assigned_pic_date')->nullable();
-            $table->bigInteger('assigened_manager_id')->nullable();
+            $table->bigInteger('assigned_manager_id')->nullable();
             $table->date('assigned_manager_date')->nullable();
             $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 

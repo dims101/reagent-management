@@ -18,9 +18,11 @@ return new class extends Migration
             $table->string('nup', 20)->nullable();
             $table->string('email', 50)->nullable();
             $table->string('company', 50)->nullable();
-            $table->string('password', 50)->nullable();
+            $table->string('password')->nullable();
+            $table->boolean('is_default_password')->nullable()->default(true);
             $table->bigInteger('role_id')->nullable();
             $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 

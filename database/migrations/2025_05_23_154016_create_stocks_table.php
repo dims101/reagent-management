@@ -18,15 +18,16 @@ return new class extends Migration
             $table->string('maker', 50)->nullable();
             $table->string('catalog_no', 20)->nullable();
             $table->string('site', 50)->nullable();
-            $table->string('price', 12)->nullable();
-            $table->bigInteger('lead_time')->nullable();
-            $table->string('initial_qty', 20)->nullable();
-            $table->string('remaining_qty', 20)->nullable();
-            $table->string('minimum_qty', 20)->nullable();
+            $table->decimal('price', 10)->nullable();
+            $table->decimal('lead_time', 10, 0)->nullable();
+            $table->decimal('initial_qty', 10)->nullable();
+            $table->decimal('remaining_qty', 10)->nullable();
+            $table->decimal('minimum_qty', 10)->nullable();
             $table->string('quantity_uom', 10)->nullable();
-            $table->timestampTz('created_at')->nullable();
             $table->date('expired_date')->nullable();
             $table->bigInteger('dept_owner_id')->nullable();
+            $table->timestampTz('created_at')->nullable();
+            $table->softDeletesTz();
         });
     }
 
