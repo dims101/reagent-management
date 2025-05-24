@@ -8,8 +8,10 @@
                 <div class="info">
                     <a data-toggle="collapse" href="#collapseExample" aria-expanded="true">
                         <span>
-                            Hizrian
-                            <span class="user-level">Administrator</span>
+                            {{ auth()->user()->name ?? '-' }}
+                            <span class="user-level">
+                                {{ optional(auth()->user()->role)->name ?? '-' }}
+                            </span>
                             <span class="caret"></span>
                         </span>
                     </a>
@@ -17,9 +19,22 @@
 
                     <div class="collapse in" id="collapseExample">
                         <ul class="nav">
-                            <li>
-                                <a href="#">
-                                    <span class="link-collapse">Change Password</span>
+                            @php
+                                $isSuperUser = optional(auth()->user()->role)->name === 'Super User';
+                            @endphp
+
+                            @if ($isSuperUser)
+                                <li class="nav-item {{ request()->routeIs('register') ? 'active' : '' }}">
+                                    <a href="{{ route('register') }}" wire:navigate>
+                                        <i class="fas fa-user-plus"></i>
+                                        <p>User Registration</p>
+                                    </a>
+                                </li>
+                            @endif
+                            <li class="nav-item ">
+                                <a href="#" wire:navigate>
+                                    <i class="fas fa-key"></i>
+                                    <p>Change Password</p>
                                 </a>
                             </li>
                         </ul>

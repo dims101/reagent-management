@@ -1,6 +1,7 @@
 {{-- filepath: resources/views/livewire/auth/register.blade.php --}}
+<x-slot:subTitle>{{ $subTitle }}</x-slot>
 <div class="row mt--2">
-    <div class="col-md-6">
+    <div class="col-md-4">
         <div class="card full-height">
             <div class="card-body">
                 <div class="card-title">Register</div>
@@ -8,128 +9,450 @@
                     @csrf
 
                     <div class="form-group">
-                        <label for="name">Name</label>
-                        <input type="text" class="form-control" id="name" wire:model="name"
-                            placeholder="Enter your name" value="{{ old('name') }}" required>
-                        @error('name')
-                            <small class="form-text text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="dept_id">Department ID</label>
-                        <input type="number" class="form-control" id="dept_id" wire:model="dept_id"
-                            placeholder="Enter department ID" value="{{ old('dept_id') }}" required>
-                        @error('dept_id')
-                            <small class="form-text text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="nup">NUP</label>
-                        <input type="text" class="form-control" id="nup" wire:model="nup"
-                            placeholder="Enter NUP" value="{{ old('nup') }}" required>
+                        <label for="nup">NUP <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('nup') is-invalid @enderror" id="nup"
+                            wire:model.defer="nup" placeholder="Enter NUP" required>
                         @error('nup')
-                            <small class="form-text text-danger">{{ $message }}</small>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="form-group">
-                        <label for="email">Email</label>
-                        <input type="email" class="form-control" id="email" wire:model="email"
-                            placeholder="Enter your email" value="{{ old('email') }}" required>
+                        <label for="name">Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('name') is-invalid @enderror" id="name"
+                            wire:model.defer="name" placeholder="Enter your name" required>
+                        @error('name')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Email <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control @error('email') is-invalid @enderror" id="email"
+                            wire:model.defer="email" placeholder="Enter your email" required>
                         @error('email')
-                            <small class="form-text text-danger">{{ $message }}</small>
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="form-group">
-                        <label for="company">Company</label>
-                        <input type="text" class="form-control" id="company" wire:model="company"
-                            placeholder="Enter company" value="{{ old('company') }}" required>
-                        @error('company')
-                            <small class="form-text text-danger">{{ $message }}</small>
-                        @enderror
-                    </div>
-
-                    <div class="form-group">
-                        <label for="role_id">Role ID</label>
-                        <input type="number" class="form-control" id="role_id" wire:model="role_id"
-                            placeholder="Enter role ID" value="{{ old('role_id') }}" required>
+                        <label for="role_id">Role <span class="text-danger">*</span></label>
+                        <select class="form-control @error('role_id') is-invalid @enderror" id="role_id"
+                            wire:model.defer="role_id" required>
+                            <option value="">-- Select Role --</option>
+                            @foreach ($roles as $role)
+                                <option value="{{ $role->id }}">{{ $role->name }}</option>
+                            @endforeach
+                        </select>
                         @error('role_id')
-                            <small class="form-text text-danger">{{ $message }}</small>
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="dept_id">Department <span class="text-danger">*</span></label>
+                        <select class="form-control @error('dept_id') is-invalid @enderror" id="dept_id"
+                            wire:model.defer="dept_id" required>
+                            <option value="">-- Select Department --</option>
+                            @foreach ($departments as $department)
+                                <option value="{{ $department->id }}">{{ $department->name }}</option>
+                            @endforeach
+                        </select>
+                        @error('dept_id')
+                            <div class="invalid-feedback">{{ $message }}</div>
+                        @enderror
+                    </div>
+
+                    <div class="form-group">
+                        <label for="company">Company <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control @error('company') is-invalid @enderror" id="company"
+                            wire:model.defer="company" placeholder="Enter company" required>
+                        @error('company')
+                            <div class="invalid-feedback">{{ $message }}</div>
                         @enderror
                     </div>
 
                     <div class="text-right">
-                        <button type="submit" class="btn btn-success">Register</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fa fa-user-plus"></i> Register
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6">
+    <div class="col-md-8">
         <div class="card">
             <div class="card-body">
                 <div class="card-title">User List</div>
-                <div class="table-responsive">
-                    <table id="user-datatables" class="display table table-striped table-hover">
+                <div class="table-responsive mt-3">
+                    <table id="user-datatables" class="display table table-striped table-hover" wire:ignore>
                         <thead>
                             <tr>
                                 <th>NUP</th>
                                 <th>Name</th>
+                                <th>Email</th>
                                 <th>Department</th>
-                                <th style="width: 10%">Action</th>
+                                <th style="width: 15%">Action</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td>123456</td>
-                                <td>John Doe</td>
-                                <td>IT Department</td>
-                                <td>
-                                    <div class="form-button-action">
-                                        <button type="button" class="btn btn-link btn-primary btn-lg"
-                                            data-toggle="tooltip" title="Edit">
-                                            <i class="fa fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link btn-danger" data-toggle="tooltip"
-                                            title="Delete">
-                                            <i class="fa fa-times"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td>654321</td>
-                                <td>Jane Smith</td>
-                                <td>HR Department</td>
-                                <td>
-                                    <div class="form-button-action">
-                                        <button type="button" class="btn btn-link btn-primary btn-lg"
-                                            data-toggle="tooltip" title="Edit">
-                                            <i class="fa fa-edit"></i>
-                                        </button>
-                                        <button type="button" class="btn btn-link btn-danger" data-toggle="tooltip"
-                                            title="Delete">
-                                            <i class="fa fa-times"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
+                            @forelse ($users as $user)
+                                <tr>
+                                    <td>{{ $user->nup }}</td>
+                                    <td>{{ $user->name }}</td>
+                                    <td>{{ $user->email }}</td>
+                                    <td>
+                                        {{ optional($departments->where('id', $user->dept_id)->first())->name ?? '-' }}
+                                    </td>
+                                    <td>
+                                        <div class="form-button-action">
+                                            <button type="button" class="btn btn-link btn-primary btn-lg"
+                                                wire:click="edit({{ $user->id }})" data-toggle="tooltip"
+                                                title="Edit">
+                                                <i class="fa fa-edit"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-link btn-danger"
+                                                onclick="confirmDelete({{ $user->id }})" data-toggle="tooltip"
+                                                title="Delete">
+                                                <i class="fa fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="5" class="text-center">No users found</td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </div>
+
+    {{-- Modal Edit User --}}
+    @if ($showEditModal)
+        <div class="modal fade show d-block" tabindex="-1" role="dialog" style="background:rgba(0,0,0,0.5);">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <form wire:submit.prevent="confirmUpdateUser">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Edit User</h5>
+                            <button type="button" class="close" wire:click="closeModal">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label>Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('edit_name') is-invalid @enderror"
+                                    wire:model.defer="edit_name">
+                                @error('edit_name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>NUP <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control @error('edit_nup') is-invalid @enderror"
+                                    wire:model.defer="edit_nup">
+                                @error('edit_nup')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>Email <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control @error('edit_email') is-invalid @enderror"
+                                    wire:model.defer="edit_email">
+                                @error('edit_email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>Department <span class="text-danger">*</span></label>
+                                <select class="form-control @error('edit_dept_id') is-invalid @enderror"
+                                    wire:model.defer="edit_dept_id">
+                                    <option value="">-- Select Department --</option>
+                                    @foreach ($departments as $department)
+                                        <option value="{{ $department->id }}">{{ $department->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('edit_dept_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>Company <span class="text-danger">*</span></label>
+                                <input type="text"
+                                    class="form-control @error('edit_company') is-invalid @enderror"
+                                    wire:model.defer="edit_company">
+                                @error('edit_company')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                            <div class="form-group">
+                                <label>Role <span class="text-danger">*</span></label>
+                                <select class="form-control @error('edit_role_id') is-invalid @enderror"
+                                    wire:model.defer="edit_role_id">
+                                    <option value="">-- Select Role --</option>
+                                    @foreach ($roles as $role)
+                                        <option value="{{ $role->id }}">{{ $role->name }}</option>
+                                    @endforeach
+                                </select>
+                                @error('edit_role_id')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" wire:click="closeModal">
+                                Cancel
+                            </button>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fa fa-save"></i> Update User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
 </div>
 
 @push('scripts')
     <script>
-        $(document).ready(function() {
-            $('#user-datatables').DataTable();
+        let dataTable;
+
+        // Initialize DataTable
+        function initDataTable() {
+            // Clean up existing tooltips first
+            $('[data-toggle="tooltip"]').tooltip('dispose');
+
+            // Destroy existing DataTable instance if exists
+            if ($.fn.DataTable.isDataTable('#user-datatables')) {
+                $('#user-datatables').DataTable().destroy();
+            }
+
+            // Initialize new DataTable
+            dataTable = $('#user-datatables').DataTable({
+                responsive: true,
+                pageLength: 10,
+                order: [
+                    [1, 'asc']
+                ],
+                columnDefs: [{
+                    orderable: false,
+                    targets: -1
+                }],
+                language: {
+                    search: "Search users:",
+                    lengthMenu: "Show _MENU_ users per page",
+                    info: "Showing _START_ to _END_ of _TOTAL_ users",
+                    paginate: {
+                        first: "First",
+                        last: "Last",
+                        next: "Next",
+                        previous: "Previous"
+                    }
+                },
+                drawCallback: function() {
+                    // Reinitialize tooltips after each draw/redraw
+                    setTimeout(function() {
+                        $('[data-toggle="tooltip"]').tooltip({
+                            trigger: 'hover',
+                            delay: {
+                                show: 300,
+                                hide: 100
+                            }
+                        });
+                    }, 50);
+                }
+            });
+
+            // Initial tooltip initialization
+            setTimeout(function() {
+                $('[data-toggle="tooltip"]').tooltip({
+                    trigger: 'hover',
+                    delay: {
+                        show: 300,
+                        hide: 100
+                    }
+                });
+            }, 100);
+        }
+
+        // Function to clean up tooltips completely
+        function cleanupTooltips() {
+            // Remove all tooltip instances
+            $('[data-toggle="tooltip"]').each(function() {
+                $(this).tooltip('dispose');
+            });
+
+            // Remove any lingering tooltip elements
+            $('.tooltip').remove();
+        }
+
+        // Initialize on document ready
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable();
+        });
+
+        // Livewire event listeners
+        document.addEventListener('livewire:initialized', () => {
+            // User created event
+            Livewire.on('userCreated', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    type: data.type,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after user creation
+                    setTimeout(initDataTable, 100);
+                });
+            });
+
+            // User updated event
+            Livewire.on('userUpdated', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    type: data.type,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after update
+                    setTimeout(initDataTable, 200);
+                });
+            });
+
+            // User deleted event
+            Livewire.on('userDeleted', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    type: data.type,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after deletion
+                    setTimeout(initDataTable, 100);
+                });
+            });
+
+            // Generic alert event
+            Livewire.on('showAlert', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    type: data.type,
+                    buttons: {
+                        confirm: {
+                            className: data.type === 'error' ? 'btn btn-danger' : 'btn btn-success'
+                        }
+                    }
+                });
+            });
+
+            // Confirm update event
+            Livewire.on('confirmUpdate', () => {
+                cleanupTooltips(); // Clean up before showing confirmation
+
+                swal({
+                    title: 'Confirm Update',
+                    text: "Are you sure you want to update this user?",
+                    type: 'warning',
+                    buttons: {
+                        confirm: {
+                            text: 'Yes, update it!',
+                            className: 'btn btn-primary'
+                        },
+                        cancel: {
+                            visible: true,
+                            text: 'Cancel',
+                            className: 'btn btn-secondary'
+                        }
+                    }
+                }).then((willUpdate) => {
+                    if (willUpdate) {
+                        @this.call('updateUser');
+                    }
+                });
+            });
+
+            // Modal closed event
+            Livewire.on('modalClosed', () => {
+                // Clean up and reinitialize DataTable when modal is closed
+                cleanupTooltips();
+                setTimeout(initDataTable, 150);
+            });
+        });
+
+        // Delete confirmation function
+        window.confirmDelete = function(id) {
+            cleanupTooltips(); // Clean up before showing confirmation
+
+            swal({
+                title: 'Are you sure?',
+                text: "This user will be deleted permanently!",
+                type: 'warning',
+                buttons: {
+                    confirm: {
+                        text: 'Yes, delete it!',
+                        className: 'btn btn-danger'
+                    },
+                    cancel: {
+                        visible: true,
+                        text: 'Cancel',
+                        className: 'btn btn-secondary'
+                    }
+                }
+            }).then((willDelete) => {
+                if (willDelete) {
+                    @this.call('delete', id);
+                }
+            });
+        }
+
+        // Handle Livewire navigation events
+        document.addEventListener('livewire:navigated', function() {
+            cleanupTooltips();
+            setTimeout(initDataTable, 100);
+        });
+
+        // Handle any DOM updates from Livewire
+        document.addEventListener('livewire:load', function() {
+            cleanupTooltips();
+            setTimeout(initDataTable, 100);
+        });
+
+        // Clean up tooltips when the page is about to unload
+        window.addEventListener('beforeunload', function() {
+            cleanupTooltips();
         });
     </script>
 @endpush

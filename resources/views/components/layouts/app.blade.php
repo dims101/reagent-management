@@ -1,15 +1,3 @@
-{{-- <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-        <title>{{ $title ?? 'Page Title' }}</title>
-    </head>
-    <body>
-        {{ $slot }}
-    </body>
-</html> --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 
@@ -22,7 +10,7 @@
     <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon" />
 
     <!-- Fonts and icons -->
-    <script src="../assets/js/plugin/webfont/webfont.min.js"></script>
+    <script src="../assets/js/plugin/webfont/webfont.min.js" data-navigate-once></script>
     <script>
         WebFont.load({
             google: {
@@ -88,7 +76,7 @@
                         <div class="d-flex align-items-left align-items-md-center flex-column flex-md-row">
                             <div>
                                 <h2 class="text-white pb-2 fw-bold">{{ $title ?? 'Page Title' }}</h2>
-                                <h5 class="text-white op-7 mb-2">Free Bootstrap 4 Admin Dashboard</h5>
+                                <h5 class="text-white op-7 mb-2">{{ $subTitle ?? '' }}</h5>
                             </div>
                         </div>
                     </div>
@@ -101,41 +89,41 @@
 
     </div>
     <!--   Core JS Files   -->
-    <script src="../assets/js/core/jquery.3.2.1.min.js"></script>
-    <script src="../assets/js/core/popper.min.js"></script>
+    <script src="../assets/js/core/jquery.3.2.1.min.js" data-navigate-once></script>
+    <script src="../assets/js/core/popper.min.js" data-navigate-once></script>
     <script data-navigate-once src="../assets/js/core/bootstrap.min.js"></script>
 
     <!-- jQuery UI -->
-    <script src="../assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js"></script>
-    <script src="../assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js"></script>
+    <script src="../assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js" data-navigate-once></script>
+    <script src="../assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js" data-navigate-once></script>
 
     <!-- jQuery Scrollbar -->
-    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js"></script>
+    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js" data-navigate-once></script>
 
     <!-- Chart JS -->
-    <script src="../assets/js/plugin/chart.js/chart.min.js"></script>
+    <script src="../assets/js/plugin/chart.js/chart.min.js" data-navigate-once></script>
 
     <!-- jQuery Sparkline -->
-    <script src="../assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js"></script>
+    <script src="../assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js" data-navigate-once></script>
 
     <!-- Chart Circle -->
-    <script src="../assets/js/plugin/chart-circle/circles.min.js"></script>
+    <script src="../assets/js/plugin/chart-circle/circles.min.js" data-navigate-once></script>
 
     <!-- Datatables -->
-    <script src="../assets/js/plugin/datatables/datatables.min.js"></script>
+    <script src="../assets/js/plugin/datatables/datatables.min.js" data-navigate-once></script>
 
     <!-- Bootstrap Notify -->
-    <script src="../assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js"></script>
+    <script src="../assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js" data-navigate-once></script>
 
     <!-- jQuery Vector Maps -->
-    <script src="../assets/js/plugin/jqvmap/jquery.vmap.min.js"></script>
-    <script src="../assets/js/plugin/jqvmap/maps/jquery.vmap.world.js"></script>
+    <script src="../assets/js/plugin/jqvmap/jquery.vmap.min.js" data-navigate-once></script>
+    <script src="../assets/js/plugin/jqvmap/maps/jquery.vmap.world.js" data-navigate-once></script>
 
     <!-- Sweet Alert -->
-    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js"></script>
+    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js" data-navigate-once></script>
 
     <!-- Atlantis JS -->
-    <script src="../assets/js/atlantis.min.js"></script>
+    <script src="../assets/js/atlantis.min.js" data-navigate-once></script>
 
     @stack('scripts')
 </body>
