@@ -28,6 +28,7 @@ return new class extends Migration
             $table->bigInteger('dept_owner_id')->nullable();
             $table->timestampTz('created_at')->nullable();
             $table->softDeletesTz();
+            $table->bigInteger('updated_at')->nullable();
         });
     }
 

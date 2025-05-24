@@ -21,6 +21,7 @@ return new class extends Migration
             $table->string('status', 50)->nullable();
             $table->timestampTz('created_at')->nullable();
             $table->softDeletesTz();
+            $table->timestampTz('updated_at')->nullable();
         });
     }
 

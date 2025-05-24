@@ -15,8 +15,9 @@ return new class extends Migration
             $table->increments('id');
             $table->bigInteger('user_id')->nullable();
             $table->bigInteger('role_id')->nullable();
-            $table->timestampTz('assignment_date')->nullable();
+            $table->timestampTz('created_at')->nullable();
             $table->softDeletesTz();
+            $table->timestampTz('updated_at')->nullable();
         });
     }
 

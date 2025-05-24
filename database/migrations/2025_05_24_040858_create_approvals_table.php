@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('users', function (Blueprint $table) {
+        Schema::create('approvals', function (Blueprint $table) {
             $table->increments('id');
-            $table->string('name', 100)->nullable();
+            $table->string('reason', 200)->nullable();
             $table->bigInteger('dept_id')->nullable();
-            $table->string('nup', 20)->nullable();
-            $table->string('email', 50)->nullable();
-            $table->string('company', 50)->nullable();
-            $table->string('password')->nullable();
-            $table->boolean('is_default_password')->nullable()->default(true);
-            $table->bigInteger('role_id')->nullable();
+            $table->bigInteger('assigned_pic_id')->nullable();
+            $table->date('assigned_pic_date')->nullable();
+            $table->bigInteger('assigned_manager_id')->nullable();
+            $table->date('assigned_manager_date')->nullable();
             $table->timestampTz('created_at')->nullable();
             $table->softDeletesTz();
+            $table->timestampTz('updated_at')->nullable();
         });
     }
 
@@ -31,6 +30,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('approvals');
     }
 };
