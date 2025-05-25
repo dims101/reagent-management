@@ -73,7 +73,7 @@
                     </div>
 
                     <div class="text-right">
-                        <button type="submit" class="btn btn-success">
+                        <button type="submit" class="btn btn-success btn-pill">
                             <i class="fa fa-user-plus"></i> Register
                         </button>
                     </div>

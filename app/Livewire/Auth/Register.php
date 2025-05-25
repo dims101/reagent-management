@@ -9,10 +9,10 @@ use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 
-#[Title('Add User')]
+#[Title('Register User')]
 class Register extends Component
 {
-    public $subTitle = 'Register New User';
+    public $subTitle = 'Register a new user';
     public $name;
     public $dept_id;
     public $nup;

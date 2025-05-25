@@ -14,13 +14,14 @@
             </form>
         </div>
         {{-- End Search Bar --}}
-        <ul class="navbar-nav topbar-nav ml-md-auto align-items-center border border-primary px-2">
-            <li class="nav-item toggle-nav-search hidden-caret">
+        <ul class="navbar-nav topbar-nav ml-md-auto align-items-center border border-primary px-3 mr-2">
+            {{-- <li class="nav-item toggle-nav-search hidden-caret">
                 <a class="nav-link" data-toggle="collapse" href="#search-nav" role="button" aria-expanded="false"
                     aria-controls="search-nav">
+                    tes
                     <i class="fa fa-search"></i>
                 </a>
-            </li>
+            </li> --}}
             <li class="nav-item dropdown">
                 <div class="avatar-sm">
                     <img src="../assets/img/profile.jpg" alt="..." class="avatar-img rounded-circle">
@@ -31,19 +32,6 @@
                     aria-expanded="false">
                     {{ auth()->user()->name ?? '-' }} ({{ auth()->user()->nup ?? '-' }})
                 </a>
-                <!-- Tombol Home -->
-                <a href="{{ route('dashboard') }}" class="btn btn-primary btn-sm ml-2 d-inline-block align-middle"
-                    title="Home">
-                    <i class="fa fa-home"></i>
-                </a>
-                <!-- Tombol Logout -->
-                <a href="{{ route('logout') }}" class="btn btn-danger btn-sm ml-2 d-inline-block align-middle"
-                    title="Logout" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                    <i class="fa fa-power-off"></i>
-                </a>
-                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                    @csrf
-                </form>
                 {{-- Profile drop down --}}
                 <ul class="dropdown-menu dropdown-user animated fadeIn">
                     <div class="dropdown-user-scroll scrollbar-outer">
@@ -60,7 +48,6 @@
                         </li>
                         <li>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="#">Account Setting</a>
                             <a class="dropdown-item" href="{{ route('logout') }}"
                                 onclick="event.preventDefault();
                                                      document.getElementById('logout-form').submit();">
@@ -74,6 +61,24 @@
                     </div>
                 </ul>
                 {{-- End Profile drop down --}}
+            </li>
+        </ul>
+        <ul class="navbar-nav">
+            <li class="nav-item dropdown hidden-caret">
+                <!-- Tombol Home -->
+                <a href="{{ route('dashboard') }}"
+                    class="btn btn-primary btn-sm ml-2 d-inline-block align-middle rounded-circle" title="Home">
+                    <i class="fa fa-home"></i>
+                </a>
+                <!-- Tombol Logout -->
+                <a href="{{ route('logout') }}"
+                    class="btn btn-danger btn-sm ml-2 d-inline-block align-middle rounded-circle" title="Logout"
+                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                    <i class="fa fa-power-off"></i>
+                </a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
             </li>
         </ul>
     </div>

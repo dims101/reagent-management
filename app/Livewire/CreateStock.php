@@ -5,12 +5,14 @@ namespace App\Livewire;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Livewire\Component;
+use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class CreateStock extends Component
 {
+    public $subTitle = 'Create a new stock of reagents';
     public $input_date;
     public $po_no;
     public $reagent_name;
@@ -32,7 +34,7 @@ class CreateStock extends Component
     {
         $this->input_date = now()->format('Y-m-d');
         $this->dept_owner_id = Auth::user()->dept_id ?? null;
-        $this->owner_name = Auth::user()->name ?? 'Unknown User'; // Set owner name
+        $this->owner_name = Auth::user()->name ?? 'Unknown User';
     }
 
     protected function rules()
@@ -61,30 +63,65 @@ class CreateStock extends Component
             'initial_qty.required' => 'Quantity is required.',
             'initial_qty.min' => 'Quantity must be greater than 0.',
             'quantity_uom.required' => 'Unit of measure is required.',
-            'expired_date.required' => 'Expiry date is required.',
+            'expired_date.required' => 'Expired date is required.',
             'expired_date.after_or_equal' => 'Expiry date must be after input date.',
             'input_date.required' => 'Input date is required.',
             'dept_owner_id.required' => 'Department owner is required.',
         ];
     }
 
-    // Add real-time validation for minimum quantity
+    // Fix Case 3: Real-time validation for minimum quantity
     public function updatedMinimumQty()
     {
+        $this->validateOnly('minimum_qty');
+
         if ($this->minimum_qty && $this->initial_qty && $this->minimum_qty > $this->initial_qty) {
             $this->addError('minimum_qty', 'Minimum quantity cannot be greater than initial quantity.');
+
+            // Dispatch browser event for real-time alert
+            $this->dispatch('show-validation-error', [
+                'message' => 'Minimum quantity cannot be greater than initial quantity!'
+            ]);
+        } else {
+            $this->resetErrorBag('minimum_qty');
+        }
+    }
+
+    // Fix Case 3: Also validate when initial_qty changes
+    public function updatedInitialQty()
+    {
+        $this->validateOnly('initial_qty');
+
+        if ($this->minimum_qty && $this->initial_qty && $this->minimum_qty > $this->initial_qty) {
+            $this->addError('minimum_qty', 'Minimum quantity cannot be greater than initial quantity.');
+
+            $this->dispatch('show-validation-error', [
+                'message' => 'Minimum quantity cannot be greater than initial quantity!'
+            ]);
+        } else {
+            $this->resetErrorBag('minimum_qty');
         }
     }
 
     public function saveStock()
     {
-        // dd('code here');
         $this->validate();
+
         try {
             DB::beginTransaction();
 
+            // Additional validation check before saving
             if ($this->minimum_qty && $this->minimum_qty > $this->initial_qty) {
                 $this->addError('minimum_qty', 'Minimum quantity cannot be greater than initial quantity.');
+
+                // Fix Case 1: Dispatch SweetAlert for validation errors
+                $this->dispatch('swal', [
+                    'icon' => 'error',
+                    'title' => 'Validation Error!',
+                    'text' => 'Minimum quantity cannot be greater than initial quantity.'
+                ]);
+
+                DB::rollBack();
                 return;
             }
 
@@ -95,7 +132,6 @@ class CreateStock extends Component
             $stock->catalog_no = $this->catalog_no;
             $stock->site = $this->site;
             $stock->location = $this->location;
-            $stock->price = 0;
             $stock->lead_time = $this->lead_time;
             $stock->initial_qty = $this->initial_qty;
             $stock->remaining_qty = $this->initial_qty;
@@ -107,7 +143,6 @@ class CreateStock extends Component
             $stock->save();
 
             DB::commit();
-
 
             $this->reset([
                 'po_no',
@@ -127,6 +162,7 @@ class CreateStock extends Component
             $this->input_date = now()->format('Y-m-d');
             $this->dept_owner_id = Auth::user()->dept_id;
 
+            // Fix Case 1: Proper SweetAlert dispatch
             $this->dispatch('swal', [
                 'icon' => 'success',
                 'title' => 'Success!',
@@ -135,14 +171,21 @@ class CreateStock extends Component
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Stock creation failed: ' . $e->getMessage());
-            Log::error('Stack trace: ' . $e->getTraceAsString()); // Add stack trace
+            Log::error('Stack trace: ' . $e->getTraceAsString());
 
+            // Fix Case 1: SweetAlert for general errors
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
                 'text' => config('app.debug') ? $e->getMessage() : 'Failed to save stock. Please try again.'
             ]);
         }
+    }
+
+    // Method to handle form validation errors
+    public function updated($propertyName)
+    {
+        $this->validateOnly($propertyName);
     }
 
     private function resetForm()
@@ -160,7 +203,6 @@ class CreateStock extends Component
             'minimum_qty'
         ]);
 
-        // Set default values
         $this->input_date = now()->format('Y-m-d');
         $this->expired_date = '';
         $this->dept_owner_id = Auth::user()->dept_id ?? null;
@@ -168,7 +210,7 @@ class CreateStock extends Component
 
         $this->resetValidation();
     }
-
+    #[Title('Create Stock')]
     public function render()
     {
         return view('livewire.create-stock');

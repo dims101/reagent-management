@@ -7,10 +7,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{{ $title ?? 'Page Title' }}</title>
     <meta content='width=device-width, initial-scale=1.0, shrink-to-fit=no' name='viewport' />
-    <link rel="icon" href="../assets/img/icon.ico" type="image/x-icon" />
+    <link rel="icon" href="{{ asset('assets/img/icon.ico') }}" type="image/x-icon" />
 
     <!-- Fonts and icons -->
-    <script src="../assets/js/plugin/webfont/webfont.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/webfont/webfont.min.js') }}" data-navigate-once></script>
     <script>
         WebFont.load({
             google: {
@@ -20,7 +20,7 @@
                 "families": ["Flaticon", "Font Awesome 5 Solid", "Font Awesome 5 Regular", "Font Awesome 5 Brands",
                     "simple-line-icons"
                 ],
-                urls: ['../assets/css/fonts.min.css']
+                urls: ['{{ asset('assets/css/fonts.min.css') }}']
             },
             active: function() {
                 sessionStorage.fonts = true;
@@ -29,11 +29,14 @@
     </script>
 
     <!-- CSS Files -->
-    <link rel="stylesheet" href="../assets/css/bootstrap.min.css">
-    <link rel="stylesheet" href="../assets/css/atlantis.min.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/atlantis.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
 
     <!-- CSS Just for demo purpose, don't include it in your project -->
-    <link rel="stylesheet" href="../assets/css/demo.css">
+    <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}">
+
+    @livewireStyles
 </head>
 
 <body>
@@ -43,7 +46,7 @@
             <div class="logo-header" data-background-color="blue">
 
                 <a href="{{ route('dashboard') }}" class="logo">
-                    <img src="../assets/img/logo.svg" alt="navbar brand" class="navbar-brand">
+                    <img src="{{ asset('assets/img/logo.svg') }}" alt="navbar brand" class="navbar-brand">
                 </a>
                 <button class="navbar-toggler sidenav-toggler ml-auto" type="button" data-toggle="collapse"
                     data-target="collapse" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,42 +92,44 @@
 
     </div>
     <!--   Core JS Files   -->
-    <script src="../assets/js/core/jquery.3.2.1.min.js" data-navigate-once></script>
-    <script src="../assets/js/core/popper.min.js" data-navigate-once></script>
-    <script data-navigate-once src="../assets/js/core/bootstrap.min.js"></script>
+    <script src="{{ asset('assets/js/core/jquery.3.2.1.min.js') }}" data-navigate-once></script>
+    <script src="{{ asset('assets/js/core/popper.min.js') }}" data-navigate-once></script>
+    <script src="{{ asset('assets/js/core/bootstrap.min.js') }}" data-navigate-once></script>
 
     <!-- jQuery UI -->
-    <script src="../assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js" data-navigate-once></script>
-    <script src="../assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jquery-ui-1.12.1.custom/jquery-ui.min.js') }}" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jquery-ui-touch-punch/jquery.ui.touch-punch.min.js') }}" data-navigate-once>
+    </script>
 
     <!-- jQuery Scrollbar -->
-    <script src="../assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jquery-scrollbar/jquery.scrollbar.min.js') }}" data-navigate-once></script>
 
     <!-- Chart JS -->
-    <script src="../assets/js/plugin/chart.js/chart.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/chart.js/chart.min.js') }}" data-navigate-once></script>
 
     <!-- jQuery Sparkline -->
-    <script src="../assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jquery.sparkline/jquery.sparkline.min.js') }}" data-navigate-once></script>
 
     <!-- Chart Circle -->
-    <script src="../assets/js/plugin/chart-circle/circles.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/chart-circle/circles.min.js') }}" data-navigate-once></script>
 
     <!-- Datatables -->
-    <script src="../assets/js/plugin/datatables/datatables.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/datatables/datatables.min.js') }}" data-navigate-once></script>
 
     <!-- Bootstrap Notify -->
-    <script src="../assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/bootstrap-notify/bootstrap-notify.min.js') }}" data-navigate-once></script>
 
     <!-- jQuery Vector Maps -->
-    <script src="../assets/js/plugin/jqvmap/jquery.vmap.min.js" data-navigate-once></script>
-    <script src="../assets/js/plugin/jqvmap/maps/jquery.vmap.world.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jqvmap/jquery.vmap.min.js') }}" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/jqvmap/maps/jquery.vmap.world.js') }}" data-navigate-once></script>
 
     <!-- Sweet Alert -->
-    <script src="../assets/js/plugin/sweetalert/sweetalert.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/plugin/sweetalert/sweetalert.min.js') }}" data-navigate-once></script>
 
     <!-- Atlantis JS -->
-    <script src="../assets/js/atlantis.min.js" data-navigate-once></script>
+    <script src="{{ asset('assets/js/atlantis.min.js') }}" data-navigate-once></script>
 
+    @livewireScripts
     @stack('scripts')
 </body>
 
