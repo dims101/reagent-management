@@ -87,7 +87,7 @@
             <div class="card-body">
                 <div class="card-title">User List</div>
                 <div class="table-responsive mt-3">
-                    <table id="user-datatables" class="display table table-striped table-hover" wire:ignore>
+                    <table id="user-datatable" class="display table table-striped table-hover datatable" wire:ignore>
                         <thead>
                             <tr>
                                 <th>NUP</th>
@@ -223,20 +223,19 @@
 
 @push('scripts')
     <script>
-        let dataTable;
-
         // Initialize DataTable
         function initDataTable() {
+            let datatable;
             // Clean up existing tooltips first
             $('[data-toggle="tooltip"]').tooltip('dispose');
 
             // Destroy existing DataTable instance if exists
-            if ($.fn.DataTable.isDataTable('#user-datatables')) {
-                $('#user-datatables').DataTable().destroy();
+            if ($.fn.DataTable.isDataTable('.datatable')) {
+                $('.datatable').DataTable().destroy();
             }
 
             // Initialize new DataTable
-            dataTable = $('#user-datatables').DataTable({
+            datatable = $('#user-datatable').DataTable({
                 responsive: true,
                 pageLength: 10,
                 order: [
@@ -317,7 +316,7 @@
                     }
                 }).then(() => {
                     // Reinitialize DataTable after user creation
-                    setTimeout(initDataTable, 100);
+                    setTimeout(initDataTable, 300);
                 });
             });
 
@@ -337,7 +336,7 @@
                     }
                 }).then(() => {
                     // Reinitialize DataTable after update
-                    setTimeout(initDataTable, 200);
+                    setTimeout(initDataTable, 300);
                 });
             });
 
@@ -357,7 +356,7 @@
                     }
                 }).then(() => {
                     // Reinitialize DataTable after deletion
-                    setTimeout(initDataTable, 100);
+                    setTimeout(initDataTable, 300);
                 });
             });
 
@@ -399,6 +398,7 @@
                     }
                 }).then((willUpdate) => {
                     if (willUpdate) {
+
                         @this.call('updateUser');
                     }
                 });
@@ -408,7 +408,7 @@
             Livewire.on('modalClosed', () => {
                 // Clean up and reinitialize DataTable when modal is closed
                 cleanupTooltips();
-                setTimeout(initDataTable, 150);
+                setTimeout(initDataTable, 300);
             });
         });
 
@@ -441,13 +441,13 @@
         // Handle Livewire navigation events
         document.addEventListener('livewire:navigated', function() {
             cleanupTooltips();
-            setTimeout(initDataTable, 100);
+            setTimeout(initDataTable, 300);
         });
 
         // Handle any DOM updates from Livewire
         document.addEventListener('livewire:load', function() {
             cleanupTooltips();
-            setTimeout(initDataTable, 100);
+            setTimeout(initDataTable, 300);
         });
 
         // Clean up tooltips when the page is about to unload

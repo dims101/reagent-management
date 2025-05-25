@@ -5,14 +5,12 @@ namespace App\Livewire;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Livewire\Component;
-use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class CreateStock extends Component
 {
-    public $subTitle = 'Create a new stock of reagents';
     public $input_date;
     public $po_no;
     public $reagent_name;
@@ -63,7 +61,7 @@ class CreateStock extends Component
             'initial_qty.required' => 'Quantity is required.',
             'initial_qty.min' => 'Quantity must be greater than 0.',
             'quantity_uom.required' => 'Unit of measure is required.',
-            'expired_date.required' => 'Expired date is required.',
+            'expired_date.required' => 'Expiry date is required.',
             'expired_date.after_or_equal' => 'Expiry date must be after input date.',
             'input_date.required' => 'Input date is required.',
             'dept_owner_id.required' => 'Department owner is required.',
@@ -162,12 +160,17 @@ class CreateStock extends Component
             $this->input_date = now()->format('Y-m-d');
             $this->dept_owner_id = Auth::user()->dept_id;
 
-            // Fix Case 1: Proper SweetAlert dispatch
+            // Enhanced SweetAlert for success
             $this->dispatch('swal', [
                 'icon' => 'success',
                 'title' => 'Success!',
-                'text' => 'Stock has been added successfully.'
+                'text' => 'Stock has been added successfully.',
+                'timer' => 3000,
+                'showConfirmButton' => false
             ]);
+
+            // Also dispatch a general success event
+            $this->dispatch('stock-created-successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Stock creation failed: ' . $e->getMessage());
@@ -210,7 +213,7 @@ class CreateStock extends Component
 
         $this->resetValidation();
     }
-    #[Title('Create Stock')]
+
     public function render()
     {
         return view('livewire.create-stock');

@@ -6,6 +6,7 @@ use App\Models\Role;
 use App\Models\User;
 use Livewire\Component;
 use App\Models\Department;
+use App\Models\RoleAssignment;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 
@@ -43,6 +44,34 @@ class Register extends Component
         ];
     }
 
+    public function assignRole($userId, $roleId, $deptId)
+    {
+        // dd($userId, $roleId, $deptId);
+        RoleAssignment::create([
+            'user_id' => $userId,
+            'role_id' => $roleId,
+        ]);
+
+        $existingUser = User::where('role_id', $roleId)
+            ->where('dept_id', $deptId)
+            ->first();
+
+
+        if ($existingUser) {
+            $existingUser->update(['role_id' => 4]);
+        }
+        // dd($existingUser->role_id);
+        if ($roleId == 2) {
+            Department::findOrFail($deptId)->update([
+                'manager_id' => $userId
+            ]);
+        } else if ($roleId == 3) {
+            Department::findOrFail($deptId)->update([
+                'pic_id' => $userId
+            ]);
+        }
+    }
+
     public function register()
     {
         $this->validate();
@@ -56,12 +85,17 @@ class Register extends Component
                 'company' => $this->company,
                 'role_id' => $this->role_id,
                 'is_default_password' => true,
-                'password' => bcrypt($this->nup . '-lai-user'),
+                'password' => bcrypt($this->nup),
             ]);
 
+            if ($this->role_id == 2 || $this->role_id == 3) {
+                // Assign role to user if needed
+                $this->assignRole($user->id, $this->role_id, $this->dept_id);
+            }
             // Reset form fields
             $this->reset(['name', 'dept_id', 'nup', 'email', 'company', 'role_id']);
             $this->resetValidation();
+
 
             // Dispatch success event for SweetAlert
             $this->dispatch('userCreated', [
@@ -77,7 +111,7 @@ class Register extends Component
         } catch (\Exception $e) {
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
-                'message' => 'Registration failed. Please try again.',
+                'message' => 'Registration failed. Please try again. ' . $e->getMessage(),
                 'type' => 'error'
             ]);
         }
@@ -113,8 +147,14 @@ class Register extends Component
 
     public function updateUser()
     {
+
         try {
             $user = User::findOrFail($this->editUserId);
+            if ($this->edit_role_id == 2 || $this->edit_role_id == 3) {
+                // Assign role to user if needed
+
+                $this->assignRole($user->id, $this->edit_role_id, $this->edit_dept_id);
+            }
             $user->update([
                 'name' => $this->edit_name,
                 'email' => $this->edit_email,
@@ -123,6 +163,8 @@ class Register extends Component
                 'company' => $this->edit_company,
                 'role_id' => $this->edit_role_id,
             ]);
+
+
 
             $this->closeModal();
 
@@ -139,11 +181,19 @@ class Register extends Component
             ]);
         }
     }
+
     public function delete($id)
     {
         try {
             $user = User::findOrFail($id);
+            $user->role_id = 4; // Set to 'Guest' role
+            $user->save();
+            Department::where('manager_id', $id)->update(['manager_id' => null]);
+            Department::where('pic_id', $id)->update(['pic_id' => null]);
+
             $user->delete();
+
+
 
             $this->dispatch('userDeleted', [
                 'title' => 'Deleted!',

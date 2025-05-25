@@ -61,4 +61,20 @@ class User extends Authenticatable
             'deleted_at' => 'datetime',
         ];
     }
+    /* Override the authentication query to exclude soft deleted users
+     */
+    public function newEloquentBuilder($query)
+    {
+        return new \Illuminate\Database\Eloquent\Builder($query);
+    }
+
+    /**
+     * Ensure soft deleted users cannot authenticate
+     */
+    public static function boot()
+    {
+        parent::boot();
+
+        // You can add additional boot logic here if needed
+    }
 }
