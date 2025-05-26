@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class Request extends Model
 {
     use HasFactory, SoftDeletes;
+    protected $primaryKey = 'request_no';
+    protected $keyType = 'int';
 
     protected $fillable = [
         'request_no',

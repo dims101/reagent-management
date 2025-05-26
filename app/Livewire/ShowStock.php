@@ -5,6 +5,8 @@ namespace App\Livewire;
 use App\Models\Stock;
 use App\Models\Request;
 use Livewire\Component;
+use App\Models\Approval;
+use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 
@@ -17,50 +19,139 @@ class ShowStock extends Component
     public $purpose;
     public $reagent_id;
     public $request_qty;
-    public $request_by;
+    public $requested_by;
     public $approval_id;
+
+    // Modal properties
+    public $showModal = false;
+    public $selectedStock;
 
     protected $rules = [
         'request_no' => 'required|integer',
         'reagent_id' => 'required|integer|exists:stocks,id',
         'request_qty' => 'required|numeric|min:0.01',
-        'purpose' => 'nullable|string|max:200',
-        'request_by' => 'required|integer|exists:users,id',
+        'purpose' => 'required|string|max:200',
+        'requested_by' => 'required|integer|exists:users,id',
     ];
+
+    protected $messages = [
+        'request_no.required' => 'Request number is required.',
+        'reagent_id.required' => 'Reagent is required.',
+        'request_qty.required' => 'Request quantity is required.',
+        'purpose.required' => 'Purpose is required.',
+        'requested_by.required' => 'Requester is required.',
+    ];
+
+    public function openRequestModal($stockId)
+    {
+        $this->selectedStock = Stock::find($stockId);
+        $this->reagent_id = $stockId;
+        $this->showModal = true;
+        $this->dispatch('modal-opened');
+    }
+
+    public function closeModal()
+    {
+        $this->showModal = false;
+        $this->selectedStock = null;
+        $this->reset(['reagent_id', 'request_qty', 'purpose']);
+        $this->dispatch('modal-closed');
+    }
 
     public function submitRequest()
     {
-        dd('code goes here');
+
         try {
-            $validated = $this->validate();
+            $this->validate();
 
-            Request::create([
-                'request_no'   => $this->request_no,
-                'reagent_id'   => $this->reagent_id,
-                'request_qty'  => $this->request_qty,
-                'purpose'      => $this->purpose,
-                'request_by'   => $this->request_by,
-                'approval_id'  => $this->approval_id,
-            ]);
+            // Check if requested quantity doesn't exceed available stock
+            $stock = Stock::find($this->reagent_id);
 
-            // Optionally, reset fields or emit events
+            if (!$stock) {
+                $this->dispatch('swal', [
+                    'icon' => 'error',
+                    'title' => 'Error!',
+                    'text' => 'Selected reagent not found.'
+                ]);
+                return;
+            }
+
+            if ($this->request_qty > $stock->remaining_qty) {
+                $this->dispatch('swal', [
+                    'icon' => 'error',
+                    'title' => 'Error!',
+                    'text' => 'Request quantity cannot exceed available quantity.'
+                ]);
+                return;
+            }
+            try {
+                // Get dept_id by joining requests and stocks where reagent_id = stock.id
+                $deptId = Stock::where('id', $this->reagent_id)->value('dept_owner_id');
+                $department = Department::find($deptId);
+                $pic_id = $department ? $department->pic_id : null;
+                $manager_id = $department ? $department->manager_id : null;
+                $approval = Approval::create([
+                    'dept_id'   => $deptId,
+                    'assigned_pic_id' => $pic_id,
+                    'assigned_manager_id' => $manager_id,
+                ]);
+            } catch (\Exception $e) {
+                $this->dispatch('swal', [
+                    'icon' => 'error',
+                    'title' => 'Error!',
+                    'text' => 'Failed to create approval: ' . $e->getMessage()
+                ]);
+                return;
+            }
+
+            try {
+                Request::create([
+                    'request_no'   => $this->request_no,
+                    'reagent_id'   => $this->reagent_id,
+                    'request_qty'  => $this->request_qty,
+                    'purpose'      => $this->purpose,
+                    'requested_by' => $this->requested_by,
+                    'approval_id'  => $approval->id,
+                    'status'       => 'pending',
+                ]);
+            } catch (\Exception $e) {
+                dd($e);
+            }
+
+            // Reset fields and close modal
             $this->reset(['reagent_id', 'request_qty', 'purpose']);
-            session()->flash('success', 'Request submitted successfully.');
+            $this->closeModal();
+
+            // Generate new request number for next request
+            $lastRequestNo = Request::max('request_no');
+            $this->request_no = $lastRequestNo ? $lastRequestNo + 1 : 1;
+
+            // Dispatch success event
+            $this->dispatch('request-submitted');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            // Handle validation errors
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Validation Error!',
+                'text' => collect($e->errors())->flatten()->first()
+            ]);
         } catch (\Exception $e) {
-            session()->flash('error', 'Failed to submit request: ' . $e->getMessage());
+            // Handle other errors
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Failed to submit request: ' . $e->getMessage()
+            ]);
         }
     }
 
     public function mount()
     {
-        $this->request_by = Auth::user()->id;
+        $this->requested_by = Auth::user()->id;
         // Get the last request_no from the requests table and increment by 1
         $lastRequestNo = Request::max('request_no');
         $this->request_no = $lastRequestNo ? $lastRequestNo + 1 : 1;
-        $lastApprovalId = Request::max('approval_id');
-        $this->approval_id = $lastApprovalId ? $lastApprovalId + 1 : 1;
     }
-
 
     public function render()
     {
