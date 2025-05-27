@@ -5,12 +5,15 @@ namespace App\Livewire;
 use Carbon\Carbon;
 use App\Models\Stock;
 use Livewire\Component;
+use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
 
 class CreateStock extends Component
 {
+    #[Title('Input Reagent Stock')]
+    public $subTitle = "Input new reagent stock details";
     public $input_date;
     public $po_no;
     public $reagent_name;
@@ -32,7 +35,7 @@ class CreateStock extends Component
     {
         $this->input_date = now()->format('Y-m-d');
         $this->dept_owner_id = Auth::user()->dept_id ?? null;
-        $this->owner_name = Auth::user()->name ?? 'Unknown User';
+        $this->owner_name = Auth::user()->department ? Auth::user()->department->name : 'Unknown Department';
     }
 
     protected function rules()

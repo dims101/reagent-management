@@ -1,12 +1,8 @@
 {{-- filepath: resources/views/livewire/create-stock.blade.php --}}
+<x-slot:subTitle>{{ $subTitle }}</x-slot>
 <div class="row mt--2">
     <div class="col-md-12">
         <div class="card full-height">
-            <div class="card-header">
-                <h4 class="card-title mb-0">
-                    Input Stock
-                </h4>
-            </div>
             <div class="card-body">
                 <form wire:submit.prevent="saveStock">
                     @csrf
@@ -126,7 +122,7 @@
                         <div class="col-md-6">
                             <!-- Location -->
                             <div class="form-group">
-                                <label for="location" class="form-label">Storage Location</label>
+                                <label for="location" class="form-label">Location</label>
                                 <input type="text" class="form-control @error('location') is-invalid @enderror"
                                     id="location" wire:model.defer="location"
                                     placeholder="e.g., Freezer A1, Cabinet B2" maxlength="100">
@@ -159,9 +155,9 @@
                                 <label for="owner_display" class="form-label">Owner</label>
                                 <input type="text" class="form-control bg-light" id="owner_display"
                                     value="{{ $owner_name }}" readonly>
-                                <small class="form-text text-muted">
+                                {{-- <small class="form-text text-muted">
                                     <i class="fas fa-info-circle"></i> Auto-filled from logged in user
-                                </small>
+                                </small> --}}
                             </div>
                         </div>
                     </div>
@@ -190,7 +186,7 @@
                         <div class="col-md-6">
                             <!-- Site -->
                             <div class="form-group">
-                                <label for="site" class="form-label">Site/Building</label>
+                                <label for="site" class="form-label">Site</label>
                                 <input type="text" class="form-control @error('site') is-invalid @enderror"
                                     id="site" wire:model.defer="site" placeholder="Enter Site/Building"
                                     maxlength="100">
@@ -204,7 +200,7 @@
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="d-flex justify-content-end">
-                                <button type="submit" class="btn btn-success" wire:loading.attr="disabled">
+                                <button type="submit" class="btn btn-success btn-pill" wire:loading.attr="disabled">
                                     <span wire:loading.remove>
                                         <i class="fas fa-check"></i> Save Stock
                                     </span>
@@ -236,10 +232,7 @@
                         icon: alertData.icon,
                         title: alertData.title,
                         text: alertData.text,
-                        timer: alertData.timer || 3000,
                         buttons: false,
-                        closeOnClickOutside: false,
-                        closeOnEsc: false
                     }).then(() => {
                         // Optional: Reload page or redirect after success
                         // window.location.reload();
@@ -269,7 +262,6 @@
                     icon: 'success',
                     title: 'Success!',
                     text: 'Stock has been added successfully!',
-                    timer: 1000,
                     buttons: false
                 });
 
