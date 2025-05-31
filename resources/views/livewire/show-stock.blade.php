@@ -238,6 +238,8 @@
 
             Livewire.on('modal-closed', () => {
                 document.body.classList.remove('modal-open');
+                cleanupTooltips();
+                setTimeout(initDataTable, 100);
             });
 
             Livewire.on('request-submitted', () => {
@@ -273,13 +275,18 @@
 
         document.addEventListener('livewire:navigated', function() {
             cleanupTooltips();
-            setTimeout(initDataTable, 300);
+            setTimeout(initDataTable, 100);
+            Livewire.on('modal-closed', () => {
+                document.body.classList.remove('modal-open');
+                cleanupTooltips();
+                setTimeout(initDataTable, 100);
+            });
         });
 
-        document.addEventListener('livewire:load', function() {
-            cleanupTooltips();
-            setTimeout(initDataTable, 300);
-        });
+        // document.addEventListener('livewire:load', function() {
+        //     cleanupTooltips();
+        //     setTimeout(initDataTable, 300);
+        // });
 
         window.addEventListener('beforeunload', function() {
             cleanupTooltips();
@@ -289,7 +296,10 @@
             setTimeout(() => {
                 cleanupTooltips();
                 initDataTable();
-            }, 300);
+                shouldInitDataTable = false;
+            }, 100);
+
+
         });
     </script>
 @endpush

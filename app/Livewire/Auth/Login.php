@@ -11,12 +11,12 @@ use App\Models\User;
 
 class Login extends Component
 {
-    public $email;
+    public $nup;
     public $password;
     public $remember = false;
 
     protected $rules = [
-        'email' => 'required|email',
+        'nup' => 'required|string',
         'password' => 'required|string|min:8',
     ];
 
@@ -24,52 +24,47 @@ class Login extends Component
     {
         $this->validate();
 
-        $key = 'login-attempts:' . Str::lower($this->email) . '|' . request()->ip();
+        $key = 'login-attempts:' . Str::lower($this->nup) . '|' . request()->ip();
 
         if (RateLimiter::tooManyAttempts($key, 5)) {
             $seconds = RateLimiter::availableIn($key);
-            $this->addError('email', "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.");
+            $this->addError('nup', "Terlalu banyak percobaan login. Silakan coba lagi dalam {$seconds} detik.");
             return;
         }
 
-        // Debug: Check if user exists
-        $user = User::where('email', $this->email)->first();
+        // Find user by nup
+        $user = User::where('nup', $this->nup)->first();
 
         if (!$user) {
             RateLimiter::hit($key, 30);
-            $this->addError('email', 'User with this email does not exist.');
+            $this->addError('nup', 'User with this NUP does not exist.');
             return;
         }
 
-        // Debug: Check if user is soft deleted
         if ($user->trashed()) {
             RateLimiter::hit($key, 30);
-            $this->addError('email', 'This account has been deactivated.');
+            $this->addError('nup', 'This account has been deactivated.');
             return;
         }
 
-        // Debug: Verify password manually
         if (!Hash::check($this->password, $user->password)) {
             RateLimiter::hit($key, 30);
             $this->addError('password', 'The password is incorrect.');
             return;
         }
 
-        // Attempt authentication
         $credentials = [
-            'email' => $this->email,
+            'nup' => $this->nup,
             'password' => $this->password,
         ];
 
         if (!Auth::attempt($credentials, $this->remember)) {
             RateLimiter::hit($key, 30);
-            $this->addError('email', 'Authentication failed. Please contact support.');
+            $this->addError('nup', 'Authentication failed. Please contact support.');
             return;
         }
 
         RateLimiter::clear($key);
-
-        // Clear any session errors
         session()->forget('error');
 
         return redirect()->intended('dashboard')->with('success', 'Login successful! Welcome back.');

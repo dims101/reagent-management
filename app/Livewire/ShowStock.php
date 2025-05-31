@@ -114,6 +114,7 @@ class ShowStock extends Component
                     'approval_id'  => $approval->id,
                     'status'       => 'pending',
                 ]);
+                // Mail::to mail here
             } catch (\Exception $e) {
                 dd($e);
             }

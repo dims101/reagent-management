@@ -207,7 +207,7 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" wire:click="closeModal">
+                            <button type="button" class="btn btn-secondary" wire:click="closeRegisterModal">
                                 Cancel
                             </button>
                             <button type="submit" class="btn btn-primary">
@@ -316,7 +316,7 @@
                     }
                 }).then(() => {
                     // Reinitialize DataTable after user creation
-                    setTimeout(initDataTable, 300);
+                    setTimeout(initDataTable, 100);
                 });
             });
 
@@ -356,7 +356,7 @@
                     }
                 }).then(() => {
                     // Reinitialize DataTable after deletion
-                    setTimeout(initDataTable, 300);
+                    setTimeout(initDataTable, 100);
                 });
             });
 
@@ -405,10 +405,11 @@
             });
 
             // Modal closed event
-            Livewire.on('modalClosed', () => {
+            Livewire.on('registerModalClosed', () => {
                 // Clean up and reinitialize DataTable when modal is closed
+                // alert('Modal closed');
                 cleanupTooltips();
-                setTimeout(initDataTable, 300);
+                setTimeout(initDataTable, 100);
             });
         });
 
@@ -441,7 +442,11 @@
         // Handle Livewire navigation events
         document.addEventListener('livewire:navigated', function() {
             cleanupTooltips();
-            setTimeout(initDataTable, 300);
+            Livewire.on('registerModalClosed', () => {
+                // Clean up and reinitialize DataTable when modal is closed
+                cleanupTooltips();
+                setTimeout(initDataTable, 100);
+            });
         });
 
         // Handle any DOM updates from Livewire

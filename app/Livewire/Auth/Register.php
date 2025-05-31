@@ -166,7 +166,7 @@ class Register extends Component
 
 
 
-            $this->closeModal();
+            $this->closeRegisterModal();
 
             $this->dispatch('userUpdated', [
                 'title' => 'Updated!',
@@ -209,14 +209,15 @@ class Register extends Component
         }
     }
 
-    public function closeModal()
+    public function closeRegisterModal()
     {
+        // dd('Closing modal');
         $this->showEditModal = false;
         $this->reset(['editUserId', 'edit_name', 'edit_email', 'edit_nup', 'edit_dept_id', 'edit_company', 'edit_role_id']);
         $this->resetValidation();
 
         // Dispatch event to reinitialize DataTable
-        $this->dispatch('modalClosed');
+        $this->dispatch('registerModalClosed');
     }
 
     public function render()

@@ -1,3 +1,11 @@
 .btn-pill {
     border-radius: 50rem;
 }
+
+.custom-login-card {
+    border-radius: 28px !important;
+    box-shadow: 0 4px 32px rgba(0, 0, 0, 0.1);
+    border: none;
+    background: #fff;
+    padding: 2.5rem 2rem;
+}

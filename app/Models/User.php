@@ -29,6 +29,7 @@ class User extends Authenticatable
         return $this->belongsTo(Department::class, 'dept_id');
     }
 
+
     protected $fillable = [
         'name',
         'dept_id',

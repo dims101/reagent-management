@@ -66,8 +66,8 @@
                         <p>Stock Of Others</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#">
+                <li class="nav-item {{ request()->routeIs('approval-list') ? 'active' : '' }}">
+                    <a href="/approval" wire:navigate>
                         <i class="fas fa-table"></i>
                         <p>Approval List</p>
                     </a>
