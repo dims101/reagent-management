@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use App\Models\Stock;
 use App\Models\Request;
 use Livewire\Component;
@@ -9,6 +10,7 @@ use App\Models\Approval;
 use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class ShowStock extends Component
 {
@@ -115,8 +117,17 @@ class ShowStock extends Component
                     'status'       => 'pending',
                 ]);
                 // Mail::to mail here
+                $deptOwnerId = Stock::find($this->reagent_id)->dept_owner_id;
+                $mailPicId = Department::find($deptOwnerId)->pic_id;
+                $pic = User::find($mailPicId);
+
+                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/stock/'));
             } catch (\Exception $e) {
-                dd($e);
+                $this->dispatch('swal', [
+                    'icon' => 'error',
+                    'title' => 'Error!',
+                    'text' => 'Failed to submit request: ' . $e->getMessage()
+                ]);
             }
 
             // Reset fields and close modal

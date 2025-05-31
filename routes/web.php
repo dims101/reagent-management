@@ -33,6 +33,6 @@ Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name
 Route::get('/testmail', function () {
     $department = \App\Models\Department::find(1);
     $name = $department->name;
-    Mail::to('uztadz.jablinx@gmail.com')->send(new \App\Mail\SendApproval($name));
+    Mail::to('uztadz.jablinx@gmail.com')->send(new \App\Mail\SendApprovalmanager($name, 'https://www.google .com/'));
     return [$department->name, $department->pic_id, $department->manager_id];
 });

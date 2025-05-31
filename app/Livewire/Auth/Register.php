@@ -47,34 +47,43 @@ class Register extends Component
     public function assignRole($userId, $roleId, $deptId)
     {
         // dd($userId, $roleId, $deptId);
-        RoleAssignment::create([
-            'user_id' => $userId,
-            'role_id' => $roleId,
-        ]);
+        try {
+            $existingUser = User::where('role_id', $roleId)
+                ->where('dept_id', $deptId)
+                ->first();
 
-        $existingUser = User::where('role_id', $roleId)
-            ->where('dept_id', $deptId)
-            ->first();
+            if ($existingUser && $existingUser->id != $userId) {
+                $existingUser->update(['role_id' => 4]);
 
+                RoleAssignment::create([
+                    'user_id' => $userId,
+                    'role_id' => $roleId,
+                ]);
 
-        if ($existingUser) {
-            $existingUser->update(['role_id' => 4]);
-        }
-        // dd($existingUser->role_id);
-        if ($roleId == 2) {
-            Department::findOrFail($deptId)->update([
-                'manager_id' => $userId
+                if ($roleId == 2) {
+                    Department::findOrFail($deptId)->update([
+                        'manager_id' => $userId
+                    ]);
+                } else if ($roleId == 3) {
+                    Department::findOrFail($deptId)->update([
+                        'pic_id' => $userId
+                    ]);
+                }
+            }
+        } catch (\Exception $e) {
+            $this->dispatch('showAlert', [
+                'title' => 'Error!',
+                'message' => 'Failed to assign role. ' . $e->getMessage(),
+                'type' => 'error'
             ]);
-        } else if ($roleId == 3) {
-            Department::findOrFail($deptId)->update([
-                'pic_id' => $userId
-            ]);
         }
+        return;
     }
 
     public function register()
     {
         $this->validate();
+        dd($this->role_id);
 
         try {
             $user = User::create([
@@ -176,7 +185,7 @@ class Register extends Component
         } catch (\Exception $e) {
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
-                'message' => 'Failed to update user. Please try again.',
+                'message' => 'Failed to update user. Please try again. ' . $e->getMessage(),
                 'type' => 'error'
             ]);
         }
@@ -223,7 +232,7 @@ class Register extends Component
     public function render()
     {
         return view('livewire.auth.register', [
-            'users' => User::all()
+            'users' => User::where('role_id', '!=', 1)->get()
         ]);
     }
 }

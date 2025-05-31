@@ -5,14 +5,14 @@
             <div class="card full-height">
                 <div class="card-body">
                     <div class="table-responsive">
-                        <table id="approvals-table" class="display table table-striped table-hover">
+                        <table class="display table table-striped table-hover datatable">
                             <thead class="thead-light text-center">
                                 <tr>
                                     <th>Status Approval</th>
                                     <th>Request No</th>
                                     <th>Request Date</th>
                                     <th>Requester</th>
-                                    <th>Action</th>
+                                    <th>Detail</th>
                                 </tr>
                             </thead>
                             <tbody class="text-center">
@@ -21,7 +21,9 @@
                                         <td>
                                             <div class="row">
                                                 <div class="col-2 text-right mr-0">
-                                                    @if ($approval['status'] === 'pending')
+                                                    @if (
+                                                        (auth()->user()->role_id == 2 && $approval['status'] === 'waiting manager') ||
+                                                            (auth()->user()->role_id == 3 && $approval['status'] === 'pending'))
                                                         <a href="#" class="me-2 text-primary"
                                                             title="Approve/Reject"
                                                             wire:click.prevent="openApprovalModal('{{ $approval['request_no'] }}')">
@@ -32,11 +34,7 @@
                                                 <div class="col-8">
                                                     <h5 class="mb-0"><strong>{{ $approval['requester'] }}</strong>
                                                     </h5>
-                                                    <span
-                                                        class="badge
-                                                    @if ($approval['status'] === 'pending') bg-warning
-                                                    @elseif($approval['status'] === 'approved') bg-success
-                                                    @elseif($approval['status'] === 'rejected') bg-danger @endif text-white">
+                                                    <span class="badge bg-warning text-white">
                                                         {{ ucfirst($approval['status']) }}
                                                     </span>
                                                 </div>
@@ -100,15 +98,11 @@
                                         </div>
                                     </div>
                                 </div>
-
                                 <div class="form-group">
-                                    <label for="reason" class="form-label">Reason</label>
-                                    <textarea class="form-control" id="reason" wire:model="reason" placeholder="Enter reason (required for rejection)"
-                                        rows="3"></textarea>
-                                    @error('reason')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
+                                    <label for="purpose" class="form-label">Purpose</label>
+                                    <textarea class="form-control" id="purpose" rows="3" readonly>{{ $selectedRequest['purpose'] ?? '' }}</textarea>
                                 </div>
+
                             </div>
 
                             {{-- Right Column --}}
@@ -126,9 +120,14 @@
                                         value="{{ $selectedRequest['requester_name'] ?? '' }}" readonly>
                                 </div>
 
+
                                 <div class="form-group">
-                                    <label for="purpose" class="form-label">Purpose</label>
-                                    <textarea class="form-control" id="purpose" rows="3" readonly>{{ $selectedRequest['purpose'] ?? '' }}</textarea>
+                                    <label for="reason" class="form-label">Reason</label>
+                                    <textarea class="form-control" id="reason" wire:model="reason"
+                                        placeholder="Enter reason (required for rejection or approval)" rows="3"></textarea>
+                                    @error('reason')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
                                 </div>
                             </div>
                         </div>
@@ -253,8 +252,31 @@
 </div>
 @push('scripts')
     <script>
+        initDataTable = function() {
+            if ($.fn.DataTable.isDataTable('.datatable')) {
+                $('.datatable').DataTable().destroy();
+                // alert('code triggered');
+            }
+            $('.datatable').DataTable({
+                "order": [
+                    [2, "asc"]
+                ], // Order by request date ascending
+                "pageLength": 10,
+                "responsive": true
+            });
+        };
         document.addEventListener('livewire:init', function() {
             // Listen for confirmation events
+            Livewire.on('modal-opened', () => {
+                document.body.classList.add('modal-open');
+            });
+
+            Livewire.on('modal-closed', () => {
+
+                document.body.classList.remove('modal-open');
+                setTimeout(initDataTable, 100);
+            });
+
             Livewire.on('confirm-approve', (event) => {
                 // Handle both array and object data formats
                 const data = Array.isArray(event) ? event[0] : event;
@@ -319,17 +341,8 @@
             Livewire.on('approvalUpdated', () => {
                 console.log('Approval list updated');
                 // Reinitialize DataTable if needed
-                if ($.fn.DataTable.isDataTable('#approvals-table')) {
-                    $('#approvals-table').DataTable().destroy();
-                }
                 setTimeout(() => {
-                    $('#approvals-table').DataTable({
-                        "order": [
-                            [2, "desc"]
-                        ], // Order by request date descending
-                        "pageLength": 10,
-                        "responsive": true
-                    });
+                    initDataTable;
                 }, 100);
             });
 
@@ -348,14 +361,128 @@
             });
         });
 
-        $(document).ready(function() {
-            $('#approvals-table').DataTable({
-                "order": [
-                    [2, "desc"]
-                ], // Order by request date descending
-                "pageLength": 10,
-                "responsive": true
+        // document.addEventListener('livewire:initialized', function() {
+        //     // Initialize DataTable
+        //     alert('Livewire initialized');
+        //     $('.datatable').DataTable({
+        //         "order": [
+        //             [2, "asc"]
+        //         ], // Order by request date ascending
+        //         "pageLength": 10,
+        //         "responsive": true
+        //     });
+        // });
+
+        document.addEventListener('livewire:navigated', function(event) {
+            // Handle navigation events if needed
+            setTimeout(initDataTable, 100);
+            Livewire.on('modal-opened', () => {
+                document.body.classList.add('modal-open');
             });
+
+            Livewire.on('modal-closed', () => {
+                document.body.classList.remove('modal-open');
+                setTimeout(initDataTable, 100);
+            });
+            Livewire.on('confirm-approve', (event) => {
+                // Handle both array and object data formats
+                const data = Array.isArray(event) ? event[0] : event;
+
+                swal({
+                    title: "Are you sure?",
+                    text: "Do you want to approve this request?",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, approve it!",
+                            visible: true,
+                            className: "",
+                            closeModal: true
+                        }
+                    }
+                }).then((isConfirm) => {
+                    if (isConfirm) {
+                        // Call the Livewire method with the request_no
+                        @this.call('confirmApprove', data.request_no);
+                    }
+                });
+            });
+
+            Livewire.on('confirm-reject', (event) => {
+                // Handle both array and object data formats
+                const data = Array.isArray(event) ? event[0] : event;
+
+                swal({
+                    title: "Are you sure?",
+                    text: "Do you want to reject this request?",
+                    icon: "warning",
+                    buttons: {
+                        cancel: {
+                            text: "Cancel",
+                            visible: true,
+                            className: "",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: "Yes, reject it!",
+                            visible: true,
+                            className: "",
+                            closeModal: true
+                        }
+                    }
+                }).then(function(isConfirm) {
+                    if (isConfirm) {
+                        // Call the Livewire method with request_no and reason
+                        @this.call('confirmReject', data.request_no, data.reason);
+                    }
+                });
+            });
+
+            // Listen for approval updates
+            Livewire.on('approvalUpdated', () => {
+                console.log('Approval list updated');
+                // Reinitialize DataTable if needed
+                if ($.fn.DataTable.isDataTable('.datatable')) {
+                    $('.datatable').DataTable().destroy();
+                }
+                setTimeout(() => {
+                    initDataTable;
+                }, 100);
+            });
+
+            // Listen for SweetAlert events
+            Livewire.on('swal', (event) => {
+                const data = Array.isArray(event) ? event[0] : event;
+                swal({
+                    title: data.title,
+                    text: data.text,
+                    icon: data.icon,
+                    dangerMode: true,
+                    button: {
+                        text: "OK",
+                    }
+                });
+            });
+        });
+
+        // $(document).ready(function() {
+        //     alert('Document is ready');
+        //     $('.datatable').DataTable({
+        //         "order": [
+        //             [2, "asc"]
+        //         ], // Order by request date descending
+        //         "pageLength": 10,
+        //         "responsive": true
+        //     });
+        // });
+        document.addEventListener('DOMContentLoaded', function() {
+            initDataTable();
         });
     </script>
 @endpush

@@ -2,11 +2,14 @@
 
 namespace App\Livewire;
 
+use App\Models\User;
 use App\Models\Request;
-use App\Models\Approval;
 use Livewire\Component;
+use App\Models\Approval;
+use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class ApprovalList extends Component
 {
@@ -16,7 +19,7 @@ class ApprovalList extends Component
     public $showApprovalModal = false;
     public $selectedApproval = null;
     public $selectedRequest = null;
-    public $reason = '';
+    public $reason;
 
     public function openDetailModal($request_no)
     {
@@ -69,12 +72,12 @@ class ApprovalList extends Component
                 'stocks.remaining_qty',
                 'stocks.quantity_uom',
                 'stocks.reagent_name',
+                'approvals.reason',
             ])
             ->first();
-
+        $this->reason = $request ? $request->reason : '';
         $this->selectedRequest = $request ? $request->toArray() : null;
         $this->showApprovalModal = true;
-        $this->reason = '';
     }
 
     public function approveRequest()
@@ -84,6 +87,14 @@ class ApprovalList extends Component
                 'icon' => 'error',
                 'title' => 'Error!',
                 'text' => 'No request selected.'
+            ]);
+            return;
+        }
+        if (empty(trim($this->reason))) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Reason is required for approval.'
             ]);
             return;
         }
@@ -126,15 +137,37 @@ class ApprovalList extends Component
         try {
             $request = Request::where('request_no', $request_no)->first();
             if ($request) {
-                $request->update(['status' => 'approved']);
+
+                if (Auth::user()->role_id == 3) {
+                    $request->update(['status' => 'waiting manager']);
+                } elseif (Auth::user()->role_id == 2) {
+                    $request->update(['status' => 'approved']);
+                } else {
+                    $this->dispatch('swal', [
+                        'icon' => 'error',
+                        'title' => 'Unauthorized!',
+                        'text' => 'You don\'t have authorization to approve this request.'
+                    ]);
+                    return;
+                }
 
                 // Update approval record
                 $approval = Approval::find($request->approval_id);
                 if ($approval) {
-                    $approval->update([
-                        'reason' => $this->reason ?: 'Approved', // Use reason if provided, otherwise default
-                        'assigned_pic_date' => now(),
-                    ]);
+                    if (Auth::user()->role_id == 3) {
+                        $approval->update([
+                            'reason' => Auth::user()->name . ": " . $this->reason ?: 'Approved',
+                            'assigned_pic_date' => now(),
+                        ]);
+                        $dept = Department::find(Auth::user()->dept_id);
+                        $manager = User::find($dept->manager_id);
+                        Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/stock/'));
+                    } elseif (Auth::user()->role_id == 2) {
+                        $approval->update([
+                            'reason' => $this->reason ?: 'Approved',
+                            'assigned_manager_date' => now(),
+                        ]);
+                    }
                 }
 
                 $this->closeModal();
@@ -197,6 +230,7 @@ class ApprovalList extends Component
         $this->selectedApproval = null;
         $this->selectedRequest = null;
         $this->reason = '';
+        $this->dispatch('modal-closed');
     }
 
     public function render()
@@ -208,6 +242,7 @@ class ApprovalList extends Component
             ->join('users', 'requests.requested_by', '=', 'users.id')
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
             ->where('approvals.dept_id', $deptId)
+            ->whereIn('requests.status', ['pending', 'waiting manager'])
             ->orderBy('requests.created_at', 'asc')
             ->select([
                 'requests.request_no',

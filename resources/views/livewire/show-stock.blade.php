@@ -232,6 +232,7 @@
         });
 
         document.addEventListener('livewire:initialized', function() {
+            // alert('Livewire initialized');
             Livewire.on('modal-opened', () => {
                 document.body.classList.add('modal-open');
             });
@@ -278,7 +279,6 @@
             setTimeout(initDataTable, 100);
             Livewire.on('modal-closed', () => {
                 document.body.classList.remove('modal-open');
-                cleanupTooltips();
                 setTimeout(initDataTable, 100);
             });
         });

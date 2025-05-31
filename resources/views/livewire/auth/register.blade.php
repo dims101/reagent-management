@@ -207,10 +207,11 @@
                             </div>
                         </div>
                         <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" wire:click="closeRegisterModal">
+                            <button type="button" class="btn btn-secondary btn-pill"
+                                wire:click="closeRegisterModal">
                                 Cancel
                             </button>
-                            <button type="submit" class="btn btn-primary">
+                            <button type="submit" class="btn btn-primary btn-pill">
                                 <i class="fa fa-save"></i> Update User
                             </button>
                         </div>
@@ -311,12 +312,12 @@
                     type: data.type,
                     buttons: {
                         confirm: {
-                            className: 'btn btn-success'
+                            className: 'btn btn-success btn-pill'
                         }
                     }
                 }).then(() => {
                     // Reinitialize DataTable after user creation
-                    setTimeout(initDataTable, 100);
+                    setTimeout(initDataTable, 200);
                 });
             });
 
@@ -331,7 +332,7 @@
                     type: data.type,
                     buttons: {
                         confirm: {
-                            className: 'btn btn-success'
+                            className: 'btn btn-success btn-pill'
                         }
                     }
                 }).then(() => {
@@ -351,7 +352,7 @@
                     type: data.type,
                     buttons: {
                         confirm: {
-                            className: 'btn btn-success'
+                            className: 'btn btn-success btn-pill'
                         }
                     }
                 }).then(() => {
@@ -371,7 +372,8 @@
                     type: data.type,
                     buttons: {
                         confirm: {
-                            className: data.type === 'error' ? 'btn btn-danger' : 'btn btn-success'
+                            className: data.type === 'error' ? 'btn btn-danger btn-pill' :
+                                'btn btn-success btn-pill'
                         }
                     }
                 });
@@ -388,12 +390,12 @@
                     buttons: {
                         confirm: {
                             text: 'Yes, update it!',
-                            className: 'btn btn-primary'
+                            className: 'btn btn-primary btn-pill'
                         },
                         cancel: {
                             visible: true,
                             text: 'Cancel',
-                            className: 'btn btn-secondary'
+                            className: 'btn btn-secondary btn-pill'
                         }
                     }
                 }).then((willUpdate) => {
@@ -424,12 +426,12 @@
                 buttons: {
                     confirm: {
                         text: 'Yes, delete it!',
-                        className: 'btn btn-danger'
+                        className: 'btn btn-danger btn-pill'
                     },
                     cancel: {
                         visible: true,
                         text: 'Cancel',
-                        className: 'btn btn-secondary'
+                        className: 'btn btn-secondary btn-pill'
                     }
                 }
             }).then((willDelete) => {
