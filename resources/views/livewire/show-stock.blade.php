@@ -251,7 +251,7 @@
                         icon: 'success',
                         buttons: {
                             confirm: {
-                                className: 'btn btn-success'
+                                className: 'btn btn-success btn-pill'
                             }
                         }
                     });
@@ -267,7 +267,8 @@
                     type: data.icon || data.type || 'info',
                     buttons: {
                         confirm: {
-                            className: data.icon === 'error' ? 'btn btn-danger' : 'btn btn-success'
+                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
+                                'btn btn-success btn-pill'
                         }
                     }
                 });

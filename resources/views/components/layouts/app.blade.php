@@ -127,6 +127,9 @@
     <!-- Sweet Alert -->
     <script src="{{ asset('assets/js/plugin/sweetalert/sweetalert.min.js') }}" data-navigate-once></script>
 
+    {{-- Alpine JS --}}
+    {{-- <script src="{{ asset('assets/js/alpine.min.js') }}" defer></script> --}}
+
     <!-- Atlantis JS -->
     <script src="{{ asset('assets/js/atlantis.min.js') }}" data-navigate-once></script>
 

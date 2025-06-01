@@ -247,7 +247,7 @@
                             text: "OK",
                             value: true,
                             visible: true,
-                            className: "btn btn-primary"
+                            className: "btn btn-primary btn-pill"
                         }
                     });
                 }
@@ -323,7 +323,7 @@
                                 text: "OK",
                                 value: true,
                                 visible: true,
-                                className: "btn btn-primary"
+                                className: "btn btn-primary btn-pill"
                             }
                         });
                         return false;

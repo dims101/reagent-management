@@ -10,6 +10,7 @@ use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
+use App\Models\Stock;
 
 class ApprovalList extends Component
 {
@@ -153,20 +154,28 @@ class ApprovalList extends Component
 
                 // Update approval record
                 $approval = Approval::find($request->approval_id);
+                $dept = Department::find(Auth::user()->dept_id);
+                $manager = User::find($dept->manager_id);
+
                 if ($approval) {
                     if (Auth::user()->role_id == 3) {
                         $approval->update([
                             'reason' => Auth::user()->name . ": " . $this->reason ?: 'Approved',
                             'assigned_pic_date' => now(),
                         ]);
-                        $dept = Department::find(Auth::user()->dept_id);
-                        $manager = User::find($dept->manager_id);
-                        Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/stock/'));
+                        Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/approval/'));
                     } elseif (Auth::user()->role_id == 2) {
                         $approval->update([
                             'reason' => $this->reason ?: 'Approved',
                             'assigned_manager_date' => now(),
                         ]);
+                        $requestedStock = Stock::where('id', $request->reagent_id)
+                            ->first();
+                        $requestedStock->remaining_qty -= $request->request_qty;
+                        $requestedStock->save();
+                        if ($requestedStock->remaining_qty <= $requestedStock->minimum_qty && $requestedStock->remaining_qty <> 0) {
+                            Mail::to($manager->email)->send(new \App\Mail\MinimumStock($manager->name, config('app.url') . '/stock/', $requestedStock->reagent_name, $requestedStock->remaining_qty));
+                        }
                     }
                 }
 

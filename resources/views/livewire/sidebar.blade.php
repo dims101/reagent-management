@@ -50,55 +50,55 @@
                 </li>
                 <li class="nav-item {{ request()->routeIs('create-stock') ? 'active' : '' }}">
                     <a href="{{ route('create-stock') }}" wire:navigate>
-                        <i class="fas fa-layer-group"></i>
+                        <i class="fas fa-plus-circle"></i>
                         <p>Input Stock</p>
                     </a>
                 </li>
                 <li class="nav-item {{ request()->routeIs('self-stock') ? 'active' : '' }}">
                     <a href="{{ route('self-stock') }}" wire:navigate>
-                        <i class="fas fa-th-list"></i>
+                        <i class="fas fa-box-open"></i>
                         <p>Stock On Hand</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#">
-                        <i class="fas fa-pen-square"></i>
+                        <i class="fas fa-boxes"></i>
                         <p>Stock Of Others</p>
                     </a>
                 </li>
                 <li class="nav-item {{ request()->routeIs('approval-list') ? 'active' : '' }}">
                     <a href="/approval" wire:navigate>
-                        <i class="fas fa-table"></i>
+                        <i class="fas fa-clipboard-check"></i>
                         <p>Approval List</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#">
-                        <i class="fas fa-map-marker-alt"></i>
+                <li class="nav-item {{ request()->routeIs('reject') ? 'active' : '' }}">
+                    <a href="/reject" wire:navigate>
+                        <i class="fas fa-trash"></i>
                         <p>Reject List</p>
                     </a>
                 </li>
-                <li class="nav-item">
-                    <a href="#">
-                        <i class="far fa-chart-bar"></i>
+                <li class="nav-item {{ request()->routeIs('history') ? 'active' : '' }}">
+                    <a href="/history" wire:navigate>
+                        <i class="fas fa-history"></i>
                         <p>History List</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#">
-                        <i class="fas fa-bars"></i>
+                        <i class="fas fa-user-alt"></i>
                         <p>Assign Ticket Reagent</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#">
-                        <i class="fas fa-bars"></i>
+                        <i class="fas fa-plus"></i>
                         <p>Create Ticket Reagent</p>
                     </a>
                 </li>
                 <li class="nav-item">
                     <a href="#">
-                        <i class="fas fa-bars"></i>
+                        <i class="fas fa-list-ul"></i>
                         <p>Ticket Reagent List</p>
                     </a>
                 </li>

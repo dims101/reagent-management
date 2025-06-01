@@ -97,6 +97,11 @@ class ShowStock extends Component
                     'assigned_pic_id' => $pic_id,
                     'assigned_manager_id' => $manager_id,
                 ]);
+                $this->dispatch('swal', [
+                    'icon' => 'success',
+                    'title' => 'Request Submitted!',
+                    'text' => 'Reagent request submitted successfully.'
+                ]);
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',

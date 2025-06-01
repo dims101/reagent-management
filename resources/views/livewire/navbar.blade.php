@@ -42,15 +42,13 @@
                                 <div class="u-text">
                                     <h4>{{ auth()->user()->name ?? '-' }}</h4>
                                     <p class="text-muted">{{ auth()->user()->email ?? '-' }}</p>
-                                    <a href="profile.html" class="btn btn-xs btn-primary btn-sm">View Profile</a>
+                                    <a href="profile.html" class="btn btn-xs btn-primary btn-sm">Change Password</a>
                                 </div>
                             </div>
                         </li>
                         <li>
                             <div class="dropdown-divider"></div>
-                            <a class="dropdown-item" href="{{ route('logout') }}"
-                                onclick="event.preventDefault();
-                                                     document.getElementById('logout-form').submit();">
+                            <a class="dropdown-item" href="#" onclick="logoutWithConfirmation()">
                                 {{ __('Logout') }}
                             </a>
                             <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
@@ -71,9 +69,8 @@
                     <i class="fa fa-home"></i>
                 </a>
                 <!-- Tombol Logout -->
-                <a href="{{ route('logout') }}"
-                    class="btn btn-danger btn-sm ml-2 d-inline-block align-middle rounded-circle" title="Logout"
-                    onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <a href="#" class="btn btn-danger btn-sm ml-2 d-inline-block align-middle rounded-circle"
+                    title="Logout" onclick="logoutWithConfirmation()">
                     <i class="fa fa-power-off"></i>
                 </a>
                 <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
@@ -83,3 +80,29 @@
         </ul>
     </div>
 </nav>
+@push('scripts')
+    <script>
+        function logoutWithConfirmation() {
+            swal({
+                title: 'Are you sure?',
+                text: "You will be logged out.",
+                icon: 'warning',
+                buttons: {
+                    cancel: {
+                        text: 'Cancel',
+                        visible: true,
+                        className: 'btn btn-danger btn-pill'
+                    },
+                    confirm: {
+                        text: 'Yes, logout!',
+                        className: 'btn btn-success btn-pill'
+                    }
+                }
+            }).then((willLogout) => {
+                if (willLogout) {
+                    document.getElementById('logout-form').submit();
+                }
+            });
+        }
+    </script>
+@endpush

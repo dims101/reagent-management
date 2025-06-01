@@ -137,14 +137,14 @@
                             wire:click="closeModal">Cancel</button>
                         <button type="button" class="btn btn-danger btn-pill" wire:click="rejectRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="rejectRequest">Reject Request</span>
-                            <span wire:loading wire:target="rejectRequest"><i class="fa fa-spinner fa-spin"></i>
+                            <span wire:loading.remove wire:target="confirmReject">Reject Request</span>
+                            <span wire:loading wire:target="confirmReject"><i class="fa fa-spinner fa-spin"></i>
                                 Processing...</span>
                         </button>
                         <button type="button" class="btn btn-success btn-pill" wire:click="approveRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="approveRequest">Approve Request</span>
-                            <span wire:loading wire:target="approveRequest"><i class="fa fa-spinner fa-spin"></i>
+                            <span wire:loading.remove wire:target="confirmApprove">Approve Request</span>
+                            <span wire:loading wire:target="confirmApprove"><i class="fa fa-spinner fa-spin"></i>
                                 Processing...</span>
                         </button>
                     </div>
