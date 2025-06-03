@@ -135,13 +135,19 @@
 
                 window.addEventListener('livewire:navigated', function() {
                     setTimeout(initDataTable, 300);
+                }, {
+                    once: true
                 });
 
                 window.addEventListener('livewire:initialized', function() {
                     setTimeout(initDataTable, 300);
+                }, {
+                    once: true
                 });
                 window.addEventListener('modal-closed', function() {
                     setTimeout(initDataTable, 300);
+                }, {
+                    once: true
                 });
             </script>
         @endpush

@@ -251,7 +251,7 @@ class ApprovalList extends Component
             ->join('users', 'requests.requested_by', '=', 'users.id')
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
             ->where('approvals.dept_id', $deptId)
-            ->whereIn('requests.status', ['pending', 'waiting manager'])
+            // ->whereIn('requests.status', ['pending', 'waiting manager'])
             ->orderBy('requests.created_at', 'asc')
             ->select([
                 'requests.request_no',

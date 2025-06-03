@@ -254,32 +254,32 @@
             });
 
             // Alternative success handler
-            Livewire.on('stock-created-successfully', () => {
-                console.log('Stock created successfully!'); // Debug log
+            // Livewire.on('stock-created-successfully', () => {
+            //     console.log('Stock created successfully!'); // Debug log
 
-                // Fallback success notification
-                swal({
-                    icon: 'success',
-                    title: 'Success!',
-                    text: 'Stock has been added successfully!',
-                    buttons: false
-                });
+            //     // Fallback success notification
+            //     swal({
+            //         icon: 'success',
+            //         title: 'Success!',
+            //         text: 'Stock has been added successfully!',
+            //         buttons: false
+            //     });
 
-                // Optional: Show bootstrap notify as well
-                if (typeof $.notify !== 'undefined') {
-                    $.notify({
-                        icon: 'fa fa-check',
-                        message: 'Stock has been added successfully!'
-                    }, {
-                        type: 'success',
-                        timer: 1000,
-                        placement: {
-                            from: 'bottom',
-                            align: 'right'
-                        }
-                    });
-                }
-            });
+            //     // Optional: Show bootstrap notify as well
+            //     if (typeof $.notify !== 'undefined') {
+            //         $.notify({
+            //             icon: 'fa fa-check',
+            //             message: 'Stock has been added successfully!'
+            //         }, {
+            //             type: 'success',
+            //             timer: 1000,
+            //             placement: {
+            //                 from: 'bottom',
+            //                 align: 'right'
+            //             }
+            //         });
+            //     }
+            // });
 
             // Fix Case 3: Real-time validation error alert
             Livewire.on('show-validation-error', (data) => {
@@ -303,10 +303,12 @@
                     alert(data[0].message);
                 }
             });
+        }, {
+            once: true
         });
 
         // Additional validation check on form submit
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('livewire:navigated', function() {
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
@@ -330,10 +332,37 @@
                     }
                 });
             }
+            Livewire.on('swal', (data) => {
+                console.log('SweetAlert triggered:', data); // Debug log
 
-            // Test SweetAlert on page load (remove this after testing)
-            // Uncomment the line below to test if SweetAlert is working
-            // setTimeout(() => { swal('Test', 'SweetAlert is working!', 'success'); }, 1000);
+                const alertData = data[0];
+
+                // Different configurations based on icon type
+                if (alertData.icon === 'success') {
+                    swal({
+                        icon: alertData.icon,
+                        title: alertData.title,
+                        text: alertData.text,
+                        buttons: false,
+                    }).then(() => {
+                        // Optional: Reload page or redirect after success
+                        // window.location.reload();
+                    });
+                } else {
+                    // For error and other types
+                    swal({
+                        icon: alertData.icon,
+                        title: alertData.title,
+                        text: alertData.text,
+                        button: {
+                            text: "OK",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-primary btn-pill"
+                        }
+                    });
+                }
+            });
         });
     </script>
 @endpush

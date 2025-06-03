@@ -2,7 +2,7 @@
 <div class="row mt--2">
     <div class="col-md-12">
         <div class="card full-height">
-            <div class="card-body">
+            <div class="card-body" wire:ignore>
                 <table id="stock-datatable" class="display table table-striped table-hover datatable" wire:ignore>
                     <thead class="table-secondary">
                         <tr>
@@ -229,6 +229,8 @@
 
         document.addEventListener('DOMContentLoaded', function() {
             initDataTable();
+        }, {
+            once: true
         });
 
         document.addEventListener('livewire:initialized', function() {
@@ -273,15 +275,49 @@
                     }
                 });
             });
+        }, {
+            once: true
         });
 
         document.addEventListener('livewire:navigated', function() {
+            // alert('Livewire navigated');
             cleanupTooltips();
             setTimeout(initDataTable, 100);
             Livewire.on('modal-closed', () => {
                 document.body.classList.remove('modal-open');
                 setTimeout(initDataTable, 100);
             });
+            Livewire.on('request-submitted', () => {
+                setTimeout(() => {
+                    swal({
+                        title: 'Success!',
+                        text: 'Request submitted successfully.',
+                        icon: 'success',
+                        buttons: {
+                            confirm: {
+                                className: 'btn btn-success btn-pill'
+                            }
+                        }
+                    });
+                    cleanupTooltips();
+                    initDataTable();
+                }, 400);
+            });
+            Livewire.on('swal', (data) => {
+                swal({
+                    title: data.title,
+                    text: data.text,
+                    type: data.icon || data.type || 'info',
+                    buttons: {
+                        confirm: {
+                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
+                                'btn btn-success btn-pill'
+                        }
+                    }
+                });
+            });
+        }, {
+            once: true
         });
 
         // document.addEventListener('livewire:load', function() {
@@ -291,6 +327,8 @@
 
         window.addEventListener('beforeunload', function() {
             cleanupTooltips();
+        }, {
+            once: true
         });
 
         Livewire.hook('message.processed', (message, component) => {
@@ -301,6 +339,8 @@
             }, 100);
 
 
+        }, {
+            once: true
         });
     </script>
 @endpush

@@ -168,12 +168,12 @@ class CreateStock extends Component
                 'icon' => 'success',
                 'title' => 'Success!',
                 'text' => 'Stock has been added successfully.',
-                'timer' => 3000,
+                'timer' => 200,
                 'showConfirmButton' => false
             ]);
 
             // Also dispatch a general success event
-            $this->dispatch('stock-created-successfully');
+            // $this->dispatch('stock-created-successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Stock creation failed: ' . $e->getMessage());

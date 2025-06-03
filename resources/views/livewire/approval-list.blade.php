@@ -34,7 +34,14 @@
                                                 <div class="col-8">
                                                     <h5 class="mb-0"><strong>{{ $approval['requester'] }}</strong>
                                                     </h5>
-                                                    <span class="badge bg-warning text-white">
+                                                    <span
+                                                        class="badge
+                                                        @if ($approval['status'] === 'pending') bg-warning text-white
+                                                        @elseif($approval['status'] === 'waiting manager') bg-info text-white
+                                                        @elseif($approval['status'] === 'rejected') bg-danger text-white
+                                                        @elseif($approval['status'] === 'approved') bg-success text-white
+                                                        @else bg-secondary text-white @endif
+                                                    ">
                                                         {{ ucfirst($approval['status']) }}
                                                     </span>
                                                 </div>
@@ -359,7 +366,10 @@
                     }
                 });
             });
+        }, {
+            once: true
         });
+        // Uncomment the following lines if you want to initialize DataTable on Livewire initialization
 
         // document.addEventListener('livewire:initialized', function() {
         //     // Initialize DataTable
@@ -469,6 +479,8 @@
                     }
                 });
             });
+        }, {
+            once: true
         });
 
         // $(document).ready(function() {
@@ -483,6 +495,8 @@
         // });
         document.addEventListener('DOMContentLoaded', function() {
             initDataTable();
+        }, {
+            once: true
         });
     </script>
 @endpush

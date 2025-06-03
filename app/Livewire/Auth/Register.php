@@ -83,7 +83,7 @@ class Register extends Component
     public function register()
     {
         $this->validate();
-        dd($this->role_id);
+        // dd($this->role_id);
 
         try {
             $user = User::create([

@@ -41,9 +41,9 @@
                                     <label class="form-check-label" for="remember" style="font-weight: normal;">Remember
                                         me</label>
                                 </div>
-                                <a href="{{ route('password.request') }}" class="link-primary text-decoration-none"
+                                {{-- <a href="{{ route('password.request') }}" class="link-primary text-decoration-none"
                                     style="font-size: 1rem;">Forgot
-                                    your password?</a>
+                                    your password?</a> --}}
                             </div>
                         </div>
 

@@ -97,11 +97,12 @@ class ShowStock extends Component
                     'assigned_pic_id' => $pic_id,
                     'assigned_manager_id' => $manager_id,
                 ]);
-                $this->dispatch('swal', [
-                    'icon' => 'success',
-                    'title' => 'Request Submitted!',
-                    'text' => 'Reagent request submitted successfully.'
-                ]);
+
+                // $this->dispatch('swal', [
+                //     'icon' => 'success',
+                //     'title' => 'Request Submitted!',
+                //     'text' => 'Reagent request submitted successfully.'
+                // ]);
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
@@ -126,7 +127,7 @@ class ShowStock extends Component
                 $mailPicId = Department::find($deptOwnerId)->pic_id;
                 $pic = User::find($mailPicId);
 
-                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/stock/'));
+                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/approval/'));
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
