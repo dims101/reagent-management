@@ -143,7 +143,7 @@
                             <button type="button" class="btn btn-secondary btn-pill" wire:click="closeModal">
                                 <i class="fa fa-times"></i> Cancel
                             </button>
-                            <button type="submit" class="btn btn-success btn-pill" wire:loading.attr="disabled">
+                            <button type="submit" class="btn btn-primary btn-pill" wire:loading.attr="disabled">
                                 <span wire:loading.remove>
                                     <i class="fa fa-check"></i> Submit Request
                                 </span>
@@ -172,6 +172,9 @@
             stockDatatable = $('#stock-datatable').DataTable({
                 responsive: true,
                 pageLength: 10,
+                order: [
+                    [6, 'asc']
+                ],
                 columnDefs: [{
                         orderable: false,
                         targets: 0

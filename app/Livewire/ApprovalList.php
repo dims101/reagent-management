@@ -20,7 +20,8 @@ class ApprovalList extends Component
     public $showApprovalModal = false;
     public $selectedApproval = null;
     public $selectedRequest = null;
-    public $reason;
+    public $rejectReason; // Changed from $reason
+    public $approvalReason; // New property
 
     public function openDetailModal($request_no)
     {
@@ -73,16 +74,23 @@ class ApprovalList extends Component
                 'stocks.remaining_qty',
                 'stocks.quantity_uom',
                 'stocks.reagent_name',
-                'approvals.reason',
+                'approvals.reject_reason',
+                'approvals.approval_reason',
             ])
             ->first();
-        $this->reason = $request ? $request->reason : '';
+        $this->rejectReason = $request->reject_reason ?? '';
+        $this->approvalReason = $request->approval_reason ?? '';
+
         $this->selectedRequest = $request ? $request->toArray() : null;
         $this->showApprovalModal = true;
     }
 
     public function approveRequest()
     {
+        $this->validate([
+            'approvalReason' => 'required|string|max:500'
+        ]);
+
         if (!$this->selectedRequest) {
             $this->dispatch('swal', [
                 'icon' => 'error',
@@ -91,7 +99,7 @@ class ApprovalList extends Component
             ]);
             return;
         }
-        if (empty(trim($this->reason))) {
+        if (empty(trim($this->approvalReason))) {
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
@@ -108,6 +116,10 @@ class ApprovalList extends Component
 
     public function rejectRequest()
     {
+        $this->validate([
+            'rejectReason' => 'required|string|min:3|max:500'
+        ]);
+
         if (!$this->selectedRequest) {
             $this->dispatch('swal', [
                 'icon' => 'error',
@@ -117,7 +129,7 @@ class ApprovalList extends Component
             return;
         }
 
-        if (empty(trim($this->reason))) {
+        if (empty(trim($this->rejectReason))) {
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
@@ -129,7 +141,7 @@ class ApprovalList extends Component
         // Show confirmation dialog
         $this->dispatch('confirm-reject', [
             'request_no' => $this->selectedRequest['request_no'],
-            'reason' => $this->reason
+            'reject_reason' => $this->rejectReason
         ]);
     }
 
@@ -160,13 +172,13 @@ class ApprovalList extends Component
                 if ($approval) {
                     if (Auth::user()->role_id == 3) {
                         $approval->update([
-                            'reason' => Auth::user()->name . ": " . $this->reason ?: 'Approved',
+                            'approval_reason' => Auth::user()->name . ": " . $this->approvalReason ?: 'Approved',
                             'assigned_pic_date' => now(),
                         ]);
                         Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/approval/'));
                     } elseif (Auth::user()->role_id == 2) {
                         $approval->update([
-                            'reason' => $this->reason ?: 'Approved',
+                            'reject_reason' => $this->rejectReason ?: 'Rejected',
                             'assigned_manager_date' => now(),
                         ]);
                         $requestedStock = Stock::where('id', $request->reagent_id)
@@ -196,11 +208,11 @@ class ApprovalList extends Component
         }
     }
 
-    public function confirmReject($request_no, $reason = null)
+    public function confirmReject($request_no, $reject_reason = null)
     {
         try {
             // Use passed reason or fallback to component property
-            $rejectionReason = $reason ?: $this->reason;
+            $rejectReason = $reject_reason ?: $this->rejectReason;
 
             $request = Request::where('request_no', $request_no)->first();
             if ($request) {
@@ -209,10 +221,18 @@ class ApprovalList extends Component
                 // Update approval record
                 $approval = Approval::find($request->approval_id);
                 if ($approval) {
-                    $approval->update([
-                        'reason' => $rejectionReason,
-                        'assigned_pic_date' => now(),
-                    ]);
+                    if (Auth::user()->role_id == 3) {
+                        $approval->update([
+                            'reject_reason' => Auth::user()->name . ": " . $rejectReason ?: 'Rejected',
+                            'assigned_pic_date' => now(),
+                        ]);
+                    } elseif (Auth::user()->role_id == 2) {
+                        // For manager, we can also set the reject reason
+                        $approval->update([
+                            'reject_reason' => Auth::user()->name . ": " . $rejectReason ?: 'Rejected',
+                            'assigned_manager_date' => now(),
+                        ]);
+                    }
                 }
 
                 $this->closeModal();
@@ -238,7 +258,8 @@ class ApprovalList extends Component
         $this->showApprovalModal = false;
         $this->selectedApproval = null;
         $this->selectedRequest = null;
-        $this->reason = '';
+        $this->rejectReason = '';
+        $this->approvalReason = '';
         $this->dispatch('modal-closed');
     }
 
@@ -252,7 +273,7 @@ class ApprovalList extends Component
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
             ->where('approvals.dept_id', $deptId)
             // ->whereIn('requests.status', ['pending', 'waiting manager'])
-            ->orderBy('requests.created_at', 'asc')
+            ->orderBy('requests.request_no', 'asc')
             ->select([
                 'requests.request_no',
                 'requests.created_at as request_date',

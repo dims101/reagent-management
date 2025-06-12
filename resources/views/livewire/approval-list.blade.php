@@ -16,7 +16,14 @@
                                 </tr>
                             </thead>
                             <tbody class="text-center">
-                                @forelse($approvals as $approval)
+                                @php
+                                    $filteredApprovals = $approvals;
+                                    if (auth()->user()->role_id == 2) {
+                                        $filteredApprovals = collect($approvals)->where('status', 'waiting manager');
+                                    }
+                                @endphp
+
+                                @forelse($filteredApprovals as $approval)
                                     <tr>
                                         <td>
                                             <div class="row">
@@ -35,12 +42,12 @@
                                                     <h5 class="mb-0"><strong>{{ $approval['requester'] }}</strong>
                                                     </h5>
                                                     <span
-                                                        class="badge
-                                                        @if ($approval['status'] === 'pending') bg-warning text-white
-                                                        @elseif($approval['status'] === 'waiting manager') bg-info text-white
-                                                        @elseif($approval['status'] === 'rejected') bg-danger text-white
-                                                        @elseif($approval['status'] === 'approved') bg-success text-white
-                                                        @else bg-secondary text-white @endif
+                                                        class="text-white badge
+                                                        @if ($approval['status'] === 'pending') bg-warning
+                                                        @elseif($approval['status'] === 'waiting manager') bg-info
+                                                        @elseif($approval['status'] === 'rejected') bg-danger
+                                                        @elseif($approval['status'] === 'approved') bg-success
+                                                        @else bg-secondary @endif
                                                     ">
                                                         {{ ucfirst($approval['status']) }}
                                                     </span>
@@ -129,10 +136,19 @@
 
 
                                 <div class="form-group">
-                                    <label for="reason" class="form-label">Reason</label>
-                                    <textarea class="form-control" id="reason" wire:model="reason"
-                                        placeholder="Enter reason (required for rejection or approval)" rows="3"></textarea>
-                                    @error('reason')
+                                    <label for="reject_reason" class="form-label">Reject Reason</label>
+                                    <textarea class="form-control @error('rejectReason') is-invalid @enderror" id="reject_reason" wire:model="rejectReason"
+                                        placeholder="Enter a reason (required for rejection)" rows="3"></textarea>
+                                    @error('rejectReason')
+                                        <small class="text-danger">{{ $message }}</small>
+                                    @enderror
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="approval_reason" class="form-label">Approval Reason</label>
+                                    <textarea class="form-control  @error('approvalReason') is-invalid @enderror" id="approval_reason"
+                                        wire:model="approvalReason" placeholder="Enter a reason (required for approval)" rows="3"></textarea>
+                                    @error('approvalReason')
                                         <small class="text-danger">{{ $message }}</small>
                                     @enderror
                                 </div>
@@ -140,19 +156,26 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary btn-pill"
-                            wire:click="closeModal">Cancel</button>
+                        <button type="button" class="btn btn-secondary btn-pill" wire:click="closeModal">
+                            <i class="fa fa-times"></i> Cancel
+                        </button>
                         <button type="button" class="btn btn-danger btn-pill" wire:click="rejectRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="confirmReject">Reject Request</span>
-                            <span wire:loading wire:target="confirmReject"><i class="fa fa-spinner fa-spin"></i>
-                                Processing...</span>
+                            <span wire:loading.remove wire:target="confirmReject">
+                                <i class="fa fa-ban"></i> Reject Request
+                            </span>
+                            <span wire:loading wire:target="confirmReject">
+                                <i class="fa fa-spinner fa-spin"></i> Processing...
+                            </span>
                         </button>
                         <button type="button" class="btn btn-success btn-pill" wire:click="approveRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="confirmApprove">Approve Request</span>
-                            <span wire:loading wire:target="confirmApprove"><i class="fa fa-spinner fa-spin"></i>
-                                Processing...</span>
+                            <span wire:loading.remove wire:target="confirmApprove">
+                                <i class="fa fa-check"></i> Approve Request
+                            </span>
+                            <span wire:loading wire:target="confirmApprove">
+                                <i class="fa fa-spinner fa-spin"></i> Processing...
+                            </span>
                         </button>
                     </div>
                 </div>
@@ -265,11 +288,11 @@
                 // alert('code triggered');
             }
             $('.datatable').DataTable({
-                "order": [
-                    [2, "asc"]
-                ], // Order by request date ascending
                 "pageLength": 10,
-                "responsive": true
+                "responsive": true,
+                "order": [
+                    [3, "asc"]
+                ], // Order by request date descending
             });
         };
         document.addEventListener('livewire:init', function() {
@@ -287,7 +310,6 @@
             Livewire.on('confirm-approve', (event) => {
                 // Handle both array and object data formats
                 const data = Array.isArray(event) ? event[0] : event;
-
                 swal({
                     title: "Are you sure?",
                     text: "Do you want to approve this request?",
@@ -296,13 +318,13 @@
                         cancel: {
                             text: "Cancel",
                             visible: true,
-                            className: "",
+                            className: "btn btn-secondary btn-pill",
                             closeModal: true,
                         },
                         confirm: {
                             text: "Yes, approve it!",
                             visible: true,
-                            className: "",
+                            className: "btn btn-success btn-pill",
                             closeModal: true
                         }
                     }
@@ -317,7 +339,6 @@
             Livewire.on('confirm-reject', (event) => {
                 // Handle both array and object data formats
                 const data = Array.isArray(event) ? event[0] : event;
-
                 swal({
                     title: "Are you sure?",
                     text: "Do you want to reject this request?",
@@ -326,20 +347,20 @@
                         cancel: {
                             text: "Cancel",
                             visible: true,
-                            className: "",
+                            className: "btn btn-secondary btn-pill",
                             closeModal: true,
                         },
                         confirm: {
                             text: "Yes, reject it!",
                             visible: true,
-                            className: "",
+                            className: "btn btn-danger btn-pill",
                             closeModal: true
                         }
                     }
                 }).then(function(isConfirm) {
                     if (isConfirm) {
                         // Call the Livewire method with request_no and reason
-                        @this.call('confirmReject', data.request_no, data.reason);
+                        @this.call('confirmReject', data.request_no, data.rejectReason);
                     }
                 });
             });
@@ -360,9 +381,9 @@
                     title: data.title,
                     text: data.text,
                     icon: data.icon,
-                    dangerMode: true,
                     button: {
                         text: "OK",
+                        className: "btn btn-primary btn-pill"
                     }
                 });
             });
@@ -406,13 +427,13 @@
                         cancel: {
                             text: "Cancel",
                             visible: true,
-                            className: "",
+                            className: "btn btn-secondary btn-pill",
                             closeModal: true,
                         },
                         confirm: {
                             text: "Yes, approve it!",
                             visible: true,
-                            className: "",
+                            className: "btn btn-success btn-pill",
                             closeModal: true
                         }
                     }
@@ -436,13 +457,13 @@
                         cancel: {
                             text: "Cancel",
                             visible: true,
-                            className: "",
+                            className: "btn btn-secondary btn-pill",
                             closeModal: true,
                         },
                         confirm: {
                             text: "Yes, reject it!",
                             visible: true,
-                            className: "",
+                            className: "btn btn-danger btn-pill",
                             closeModal: true
                         }
                     }
@@ -473,9 +494,9 @@
                     title: data.title,
                     text: data.text,
                     icon: data.icon,
-                    dangerMode: true,
                     button: {
                         text: "OK",
+                        className: "btn btn-primary btn-pill"
                     }
                 });
             });

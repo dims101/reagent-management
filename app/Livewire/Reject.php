@@ -16,9 +16,9 @@ class Reject extends Component
     public $detail_purpose = '';
     public $detail_request_qty = '';
     public $detail_quantity_uom = '';
-    public $detail_reason = '';
+    public $detail_reject_reason = '';
 
-    protected $listeners = ['modal-open' => 'onModalOpen'];
+    protected $listeners = ['modal-open' => 'onModalOpen', 'modal-closed' => 'modalClosed'];
 
     public $selectedRequestNo;
 
@@ -37,7 +37,8 @@ class Reject extends Component
                 'requests.purpose',
                 'requests.request_qty',
                 'stocks.quantity_uom',
-                'approvals.reason as reason'
+                'approvals.reject_reason as reject_reason',
+                'approvals.approval_reason as approval_reason'
             ]);
         if ($request) {
             $this->detail_request_no = $request->request_no;
@@ -46,18 +47,25 @@ class Reject extends Component
             $this->detail_purpose = $request->purpose;
             $this->detail_request_qty = $request->request_qty;
             $this->detail_quantity_uom = $request->quantity_uom;
-            $this->detail_reason = $request->reason;
+            $this->detail_reject_reason = $request->reject_reason;
         } else {
             // Handle case where request is not found
             session()->flash('error', 'Request not found.');
         }
     }
+
+    public function modalClosed()
+    {
+        $this->reset();
+    }
+
     public function render()
     {
         return view('livewire.reject', [
             'rejects' => Request::join('approvals', 'requests.approval_id', '=', 'approvals.id')
                 ->join('users as requester', 'requests.requested_by', '=', 'requester.id')
                 ->where('requests.status', 'rejected')
+                ->orderBy('requests.request_no', 'desc')
                 ->get([
                     'requests.request_no',
                     'requests.created_at as request_date',

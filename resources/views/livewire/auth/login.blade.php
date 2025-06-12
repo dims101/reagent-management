@@ -14,8 +14,8 @@
                         <div class="mb-3">
                             <label for="nup" class="form-label">NUP</label>
                             <input type="text" id="nup" wire:model.defer="nup" autocomplete="username"
-                                value="{{ old('nup') }}" required
-                                class="form-control @error('nup') is-invalid @enderror">
+                                value="{{ old('nup') }}" required class="form-control @error('nup') is-invalid @enderror"
+                                placeholder="Enter your NUP">
                             @error('nup')
                                 <span class="invalid-feedback d-block">{{ $message }}</span>
                             @enderror
@@ -24,7 +24,8 @@
                             <label for="password" class="form-label">Password</label>
                             <input type="password" id="password" wire:model.defer="password"
                                 autocomplete="current-password" required
-                                class="form-control @error('password') is-invalid @enderror">
+                                class="form-control @error('password') is-invalid @enderror"
+                                placeholder="Enter your password">
                             @error('password')
                                 <span class="invalid-feedback d-block">{{ $message }}</span>
                             @enderror

@@ -42,18 +42,19 @@
                                 <div class="u-text">
                                     <h4>{{ auth()->user()->name ?? '-' }}</h4>
                                     <p class="text-muted">{{ auth()->user()->email ?? '-' }}</p>
-                                    <a href="profile.html" class="btn btn-xs btn-primary btn-sm">Change Password</a>
+                                    {{-- <a href="#" wire:click.prevent="openChangePasswordModal"
+                                        class="btn btn-xs btn-primary btn-sm">Change Password</a>
+                                </div> --}}
                                 </div>
-                            </div>
                         </li>
                         <li>
                             <div class="dropdown-divider"></div>
                             <a class="dropdown-item" href="#" onclick="logoutWithConfirmation()">
                                 {{ __('Logout') }}
                             </a>
-                            <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                            {{-- <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                                 @csrf
-                            </form>
+                            </form> --}}
 
                         </li>
                     </div>

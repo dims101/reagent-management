@@ -12,11 +12,11 @@ use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 
-class ShowStock extends Component
+class ShowOtherStock extends Component
 {
-    #[Title('Stock On Hand')]
+    #[Title('Stock of Others')]
 
-    public $subTitle = "Manage stock on hand";
+    public $subTitle = "Manage stock of other departments";
     public $request_no;
     public $purpose;
     public $reagent_id;
@@ -173,9 +173,9 @@ class ShowStock extends Component
 
     public function render()
     {
-        return view('livewire.show-stock', [
+        return view('livewire.show-other-stock', [
             'stocks' => Stock::with('department')
-                ->where('dept_owner_id', Auth::user()->dept_id)
+                ->where('dept_owner_id', "<>", Auth::user()->dept_id)
                 ->orderBy('expired_date', 'asc')
                 ->get()
         ]);

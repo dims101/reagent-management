@@ -48,7 +48,7 @@ class CreateStock extends Component
             'catalog_no'     => 'nullable|string|max:100',
             'expired_date'   => 'required|date|after_or_equal:input_date',
             'initial_qty'    => 'required|numeric|min:0.01',
-            'quantity_uom'   => 'required|string|max:20',
+            'quantity_uom'   => 'required|string|in:pillow,g,mg|max:20',
             'site'           => 'nullable|string|max:100',
             'location'       => 'nullable|string|max:100',
             'lead_time'      => 'nullable|integer|min:0',

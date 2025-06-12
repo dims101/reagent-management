@@ -76,7 +76,7 @@
                                 </div>
                                 <div class="form-group">
                                     <label>Reject Reason</label>
-                                    <textarea class="form-control font-italic" wire:model="detail_reason" readonly></textarea>
+                                    <textarea class="form-control font-italic" wire:model="detail_reject_reason" readonly></textarea>
                                 </div>
                             </div>
                             <!-- Right Column -->
@@ -120,7 +120,7 @@
                     }
                     $('.datatable').DataTable({
                         "order": [
-                            [1, "asc"]
+                            [0, "desc"]
                         ],
                         "language": {
                             "emptyTable": "No data available in table"
@@ -128,9 +128,9 @@
                     });
                 }
 
-                $(document).ready(function() {
-                    initDataTable();
-                });
+                // $(document).ready(function() {
+                //     initDataTable();
+                // });
 
                 window.addEventListener('livewire:navigated', function() {
                     setTimeout(initDataTable, 300);
