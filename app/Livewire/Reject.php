@@ -48,6 +48,7 @@ class Reject extends Component
             $this->detail_request_qty = $request->request_qty;
             $this->detail_quantity_uom = $request->quantity_uom;
             $this->detail_reject_reason = $request->reject_reason;
+            // dd($request);
         } else {
             // Handle case where request is not found
             session()->flash('error', 'Request not found.');

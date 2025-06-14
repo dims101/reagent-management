@@ -6,10 +6,11 @@ use Log;
 use App\Models\User;
 use App\Models\Stock;
 use App\Models\Ticket;
+use App\Models\Reagent;
 use Livewire\Component;
+use Livewire\Attributes\On;
 use Livewire\WithFileUploads;
 use Livewire\Attributes\Title;
-use Livewire\Attributes\On;
 use Illuminate\Support\Facades\Storage;
 
 class AssignTicket extends Component
@@ -60,7 +61,7 @@ class AssignTicket extends Component
     public function openModal($id)
     {
         $ticket = Ticket::with(['reagent', 'requester'])->findOrFail($id);
-
+        // dd($ticket);
         $this->selectedTicketId = $id;
         $this->spk_no = $ticket->spk_no;
         $this->expected_date = $ticket->expected_date ? $ticket->expected_date->format('Y-m-d') : '';
@@ -240,11 +241,46 @@ class AssignTicket extends Component
         }
     }
 
+    public function closeTicket($ticketId)
+    {
+        $this->selectedTicketId = $ticketId;
+        $this->dispatch('swal-confirm-close', [
+            'title' => 'Are you sure?',
+            'text' => 'Do you want to close this ticket?',
+            'icon' => 'warning',
+            'confirmButtonText' => 'Yes, close it!',
+            'cancelButtonText' => 'Cancel'
+        ]);
+    }
+
+    #[On('doClose')]
+    public function confirmClose()
+    {
+        try {
+            $ticket = Ticket::findOrFail($this->selectedTicketId);
+            $ticket->update(['status' => 'closed']);
+
+            $this->dispatch('swal', [
+                'title' => 'Closed!',
+                'text' => 'Ticket has been closed.',
+                'icon' => 'success'
+            ]);
+            $this->closeModal();
+            $this->loadTickets();
+        } catch (\Exception $e) {
+            $this->dispatch('swal', [
+                'title' => 'Error!',
+                'text' => 'Failed to close ticket: ' . $e->getMessage(),
+                'icon' => 'error'
+            ]);
+        }
+    }
+
     public function render()
     {
         return view('livewire.assign-ticket', [
             'tickets' => $this->tickets,
-            'reagents' => Stock::pluck('reagent_name', 'id'),
+            'reagents' => Reagent::where('type', 'Ticket')->pluck('name', 'id'),
             'users' => User::where('deleted_at', null)->pluck('name', 'id'),
         ]);
     }

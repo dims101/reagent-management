@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use Carbon\Carbon;
 use App\Models\Stock;
+use App\Models\Reagent;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\DB;
@@ -30,6 +31,14 @@ class CreateStock extends Component
 
     // Add property for owner name display
     public $owner_name;
+    public function updatedReagentName($value)
+    {
+        $selectedReagent = Reagent::find($value['value']);
+        $this->reagent_name = $selectedReagent->name ?? '';
+        // dd($this->reagent_name);
+        $this->catalog_no = $selectedReagent->catalog_no ?? '';
+        $this->maker = $selectedReagent->vendor ?? '';
+    }
 
     public function mount()
     {
@@ -104,6 +113,21 @@ class CreateStock extends Component
         }
     }
 
+    public function confirmSaveStock()
+    {
+        // Validate first if you want to show errors before confirmation
+        $this->validate();
+
+        $this->dispatch('swal-confirm', [
+            'title' => 'Are you sure?',
+            'text' => 'Do you want to save this stock?',
+            'icon' => 'warning',
+            'confirmButtonText' => 'Yes, save it!',
+            'cancelButtonText' => 'Cancel'
+        ]);
+    }
+
+    #[\Livewire\Attributes\On('doSaveStock')]
     public function saveStock()
     {
         $this->validate();
@@ -219,6 +243,10 @@ class CreateStock extends Component
 
     public function render()
     {
-        return view('livewire.create-stock');
+        return view('livewire.create-stock', [
+            'reagents' => Reagent::select('id', 'name')
+                ->where('type', 'Stock')
+                ->get()
+        ]);
     }
 }

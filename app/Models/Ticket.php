@@ -28,6 +28,7 @@ class Ticket extends Model
         'attachment',
         'status',
         'reject_reason',
+        'uom',
     ];
 
     protected $casts = [
@@ -44,7 +45,7 @@ class Ticket extends Model
      */
     public function reagent()
     {
-        return $this->belongsTo(Stock::class, 'reagent_id');
+        return $this->belongsTo(Reagent::class, 'reagent_id');
     }
 
     /**

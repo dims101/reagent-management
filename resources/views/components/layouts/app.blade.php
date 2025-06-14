@@ -31,7 +31,10 @@
     <!-- CSS Files -->
     <link rel="stylesheet" href="{{ asset('assets/css/bootstrap.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/atlantis.min.css') }}">
+    <link rel="stylesheet" href="{{ asset('assets/css/choices.min.css') }}">
     <link rel="stylesheet" href="{{ asset('assets/css/custom.css') }}">
+    {{-- <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/css/bootstrap-select.min.css"> --}}
 
     <!-- CSS Just for demo purpose, don't include it in your project -->
     <link rel="stylesheet" href="{{ asset('assets/css/demo.css') }}">
@@ -132,6 +135,12 @@
 
     <!-- Atlantis JS -->
     <script src="{{ asset('assets/js/atlantis.min.js') }}" data-navigate-once></script>
+    <script src="{{ asset('assets/js/choices.min.js') }}" data-navigate-once></script>
+
+    {{-- Bootstrap Select --}}
+    <!-- Put this at the end of your <body> section -->
+    {{-- <script src="https://cdn.jsdelivr.net/npm/bootstrap-select@1.14.0-beta3/dist/js/bootstrap-select.min.js"></script> --}}
+
 
     @livewireScripts
     @stack('scripts')

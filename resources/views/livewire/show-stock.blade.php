@@ -61,7 +61,7 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <form wire:submit.prevent="submitRequest">
+                    <form wire:submit.prevent="confirmSubmitRequest">
                         <div class="modal-body">
                             <div class="row">
                                 {{-- Left Column --}}
@@ -315,6 +315,34 @@
                             className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
                                 'btn btn-success btn-pill'
                         }
+                    }
+                });
+            });
+            Livewire.on('swal-confirm', (data) => {
+                const alertData = data[0];
+                swal({
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
+                    buttons: {
+                        cancel: {
+                            text: alertData.cancelButtonText || "Cancel",
+                            value: false,
+                            visible: true,
+                            className: "btn btn-secondary btn-pill",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: alertData.confirmButtonText || "Yes",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-success btn-pill",
+                            closeModal: true
+                        }
+                    }
+                }).then(function(result) {
+                    if (result) {
+                        Livewire.dispatch('doSubmitRequest');
                     }
                 });
             });

@@ -4,7 +4,7 @@
     <div class="col-md-12">
         <div class="card full-height">
             <div class="card-body">
-                <form wire:submit.prevent="saveStock">
+                <form wire:submit.prevent="confirmSaveStock">
                     @csrf
                     <div class="row">
                         <div class="col-md-6">
@@ -39,13 +39,21 @@
                     <div class="row">
                         <div class="col-md-6">
                             <!-- Reagent Name -->
-                            <div class="form-group">
+                            <div class="form-group" wire:ignore>
                                 <label for="reagent_name" class="form-label">
                                     Reagent Name <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control @error('reagent_name') is-invalid @enderror"
+                                {{-- <input type="text" class="form-control @error('reagent_name') is-invalid @enderror"
                                     id="reagent_name" wire:model.defer="reagent_name" placeholder="Enter Reagent Name"
-                                    maxlength="100" required>
+                                    maxlength="100" required> --}}
+                                <select id="reagent_name"
+                                    class="form-control @error('reagent_name') is-invalid @enderror"
+                                    wire:model.live="reagent_name">
+                                    <option value="">-- Select Reagent --</option>
+                                    @foreach ($reagents as $reagent)
+                                        <option value="{{ $reagent->id }}">{{ $reagent->name }}</option>
+                                    @endforeach
+                                </select>
                                 @error('reagent_name')
                                     <div class="invalid-feedback">{{ $message }}</div>
                                 @enderror
@@ -57,8 +65,10 @@
                                 <label for="maker" class="form-label">
                                     Maker <span class="text-danger">*</span>
                                 </label>
-                                <input type="text" class="form-control @error('maker') is-invalid @enderror"
+                                <input type="text"
+                                    class="form-control text-uppercase @error('maker') is-invalid @enderror"
                                     id="maker" wire:model.defer="maker" placeholder="Enter Maker" maxlength="100"
+                                    style="text-transform: uppercase;" oninput="this.value = this.value.toUpperCase();"
                                     required>
                                 @error('maker')
                                     <div class="invalid-feedback">{{ $message }}</div>
@@ -236,6 +246,17 @@
 
 @push('scripts')
     <script>
+        function initChoices() {
+            const reagentSelect = document.getElementById('reagent_name');
+            if (reagentSelect && reagentSelect.choices) {
+                reagentSelect.choices.destroy();
+            }
+            new Choices('#reagent_name', {
+                searchEnabled: true,
+                itemSelectText: '',
+            });
+        }
+
         document.addEventListener('livewire:init', () => {
             // Enhanced SweetAlert event listener for success
             Livewire.on('swal', (data) => {
@@ -326,6 +347,7 @@
 
         // Additional validation check on form submit
         document.addEventListener('livewire:navigated', function() {
+            initChoices(); // Initialize Choices.js for reagent_name select
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
@@ -349,6 +371,7 @@
                     }
                 });
             }
+
             Livewire.on('swal', (data) => {
                 console.log('SweetAlert triggered:', data); // Debug log
 
@@ -380,6 +403,39 @@
                     });
                 }
             });
+
+            Livewire.on('swal-confirm', (data) => {
+                const alertData = data[0];
+                swal({
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
+                    buttons: {
+                        cancel: {
+                            text: alertData.cancelButtonText || "Cancel",
+                            value: false,
+                            visible: true,
+                            className: "btn btn-secondary btn-pill",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: alertData.confirmButtonText || "Yes",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-success btn-pill",
+                            closeModal: true
+                        }
+                    }
+                }).then(function(result) {
+                    if (result) {
+                        Livewire.dispatch('doSaveStock');
+                    }
+                });
+            });
+
+
+        }, {
+            once: true
         });
     </script>
 @endpush

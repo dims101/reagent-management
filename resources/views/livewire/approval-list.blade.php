@@ -133,25 +133,31 @@
                                     <input type="text" class="form-control" id="requester"
                                         value="{{ $selectedRequest['requester_name'] ?? '' }}" readonly>
                                 </div>
+                                {{-- Conditional Approval Reason Field --}}
+                                @if ($showApprovalReason)
+                                    <div class="form-group">
+                                        <label for="approval_reason" class="form-label">Approval Reason <span
+                                                class="text-danger">*</span></label>
+                                        <textarea class="form-control @error('approvalReason') is-invalid @enderror" id="approval_reason"
+                                            wire:model="approvalReason" placeholder="Enter a reason (required for approval)" rows="3"></textarea>
+                                        @error('approvalReason')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                @endif
 
-
-                                <div class="form-group">
-                                    <label for="reject_reason" class="form-label">Reject Reason</label>
-                                    <textarea class="form-control @error('rejectReason') is-invalid @enderror" id="reject_reason" wire:model="rejectReason"
-                                        placeholder="Enter a reason (required for rejection)" rows="3"></textarea>
-                                    @error('rejectReason')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="approval_reason" class="form-label">Approval Reason</label>
-                                    <textarea class="form-control  @error('approvalReason') is-invalid @enderror" id="approval_reason"
-                                        wire:model="approvalReason" placeholder="Enter a reason (required for approval)" rows="3"></textarea>
-                                    @error('approvalReason')
-                                        <small class="text-danger">{{ $message }}</small>
-                                    @enderror
-                                </div>
+                                {{-- Conditional Reject Reason Field --}}
+                                @if ($showRejectReason)
+                                    <div class="form-group">
+                                        <label for="reject_reason" class="form-label">Reject Reason <span
+                                                class="text-danger">*</span></label>
+                                        <textarea class="form-control @error('rejectReason') is-invalid @enderror" id="reject_reason" wire:model="rejectReason"
+                                            placeholder="Enter a reason (required for rejection)" rows="3"></textarea>
+                                        @error('rejectReason')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+                                @endif
                             </div>
                         </div>
                     </div>
@@ -161,26 +167,43 @@
                         </button>
                         <button type="button" class="btn btn-danger btn-pill" wire:click="rejectRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="confirmReject">
-                                <i class="fa fa-ban"></i> Reject Request
+                            <span wire:loading.remove wire:target="rejectRequest,confirmReject">
+                                <i class="fa fa-ban"></i>
+                                @if ($showRejectReason)
+                                    Confirm Reject
+                                @else
+                                    Reject Request
+                                @endif
+                            </span>
+                            <span wire:loading wire:target="rejectRequest">
+                                <i class="fa fa-spinner fa-spin"></i> Processing...
                             </span>
                             <span wire:loading wire:target="confirmReject">
-                                <i class="fa fa-spinner fa-spin"></i> Processing...
+                                <i class="fa fa-spinner fa-spin"></i> Submitting...
                             </span>
                         </button>
                         <button type="button" class="btn btn-success btn-pill" wire:click="approveRequest"
                             wire:loading.attr="disabled">
-                            <span wire:loading.remove wire:target="confirmApprove">
-                                <i class="fa fa-check"></i> Approve Request
+                            <span wire:loading.remove wire:target="approveRequest,confirmApprove">
+                                <i class="fa fa-check"></i>
+                                @if ($showApprovalReason)
+                                    Confirm Approve
+                                @else
+                                    Approve Request
+                                @endif
+                            </span>
+                            <span wire:loading wire:target="approveRequest">
+                                <i class="fa fa-spinner fa-spin"></i> Processing...
                             </span>
                             <span wire:loading wire:target="confirmApprove">
-                                <i class="fa fa-spinner fa-spin"></i> Processing...
+                                <i class="fa fa-spinner fa-spin"></i> Submitting...
                             </span>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
+
         {{-- Modal Backdrop --}}
         <div class="modal-backdrop fade show"></div>
     @endif
@@ -212,8 +235,7 @@
 
                                 <div class="form-group">
                                     <label for="detail-reagent-name" class="form-label">Reagent Name</label>
-                                    <input type="text" class="form-control" id="detail-reagent-name"
-                                        value="{{ $selectedApproval['reagent_name'] ?? '' }}" readonly>
+                                    <textarea class="form-control" id="detail-reagent-name" rows="2" readonly>{{ $selectedApproval['reagent_name'] ?? '' }}</textarea>
                                 </div>
 
                                 <div class="form-group">
@@ -291,7 +313,7 @@
                 "pageLength": 10,
                 "responsive": true,
                 "order": [
-                    [3, "asc"]
+                    [1, "desc"]
                 ], // Order by request date descending
             });
         };

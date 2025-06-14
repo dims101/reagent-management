@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Mail;
 use App\Models\Stock;
 
+
 class ApprovalList extends Component
 {
     #[Title('Approval List')]
@@ -22,6 +23,9 @@ class ApprovalList extends Component
     public $selectedRequest = null;
     public $rejectReason; // Changed from $reason
     public $approvalReason; // New property
+    public $showApprovalReason = false;
+    public $showRejectReason = false;
+
 
     public function openDetailModal($request_no)
     {
@@ -81,12 +85,21 @@ class ApprovalList extends Component
         $this->rejectReason = $request->reject_reason ?? '';
         $this->approvalReason = $request->approval_reason ?? '';
 
+        $this->showApprovalReason = !empty($this->approvalReason);
+        $this->showRejectReason = !empty($this->rejectReason);
+
         $this->selectedRequest = $request ? $request->toArray() : null;
         $this->showApprovalModal = true;
     }
 
     public function approveRequest()
     {
+        if (!$this->showApprovalReason) {
+            $this->showApprovalReason = true;
+            $this->showRejectReason = false;
+            return;
+        }
+
         $this->validate([
             'approvalReason' => 'required|string|max:500'
         ]);
@@ -116,6 +129,11 @@ class ApprovalList extends Component
 
     public function rejectRequest()
     {
+        if (!$this->showRejectReason) {
+            $this->showRejectReason = true;
+            $this->showApprovalReason = false;
+            return;
+        }
         $this->validate([
             'rejectReason' => 'required|string|min:3|max:500'
         ]);
@@ -148,7 +166,10 @@ class ApprovalList extends Component
     public function confirmApprove($request_no)
     {
         try {
-            $request = Request::where('request_no', $request_no)->first();
+            $request = Request::where('request_no', $request_no)
+                ->with('requester')
+                ->first();
+
             if ($request) {
 
                 if (Auth::user()->role_id == 3) {
@@ -178,15 +199,35 @@ class ApprovalList extends Component
                         Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/approval/'));
                     } elseif (Auth::user()->role_id == 2) {
                         $approval->update([
-                            'reject_reason' => $this->rejectReason ?: 'Rejected',
+                            'approval_reason' => $this->approvalReason ?: 'Approved by Manager',
                             'assigned_manager_date' => now(),
                         ]);
+
                         $requestedStock = Stock::where('id', $request->reagent_id)
                             ->first();
                         $requestedStock->remaining_qty -= $request->request_qty;
                         $requestedStock->save();
+
                         if ($requestedStock->remaining_qty <= $requestedStock->minimum_qty && $requestedStock->remaining_qty <> 0) {
                             Mail::to($manager->email)->send(new \App\Mail\MinimumStock($manager->name, config('app.url') . '/stock/', $requestedStock->reagent_name, $requestedStock->remaining_qty));
+                        }
+
+                        if ($manager->dept_id != $request->requester->dept_id) {
+                            Stock::create([
+                                'reagent_name' => $requestedStock->reagent_name,
+                                'po_no' => $requestedStock->po_no,
+                                'maker' => $requestedStock->maker,
+                                'catalog_no' => $requestedStock->catalog_no,
+                                'site' => $requestedStock->site,
+                                'lead_time' => $requestedStock->lead_time,
+                                'initial_qty' => $requestedStock->request_qty,
+                                'remaining_qty' => $requestedStock->request_qty,
+                                'quantity_uom' => $requestedStock->quantity_uom,
+                                'minimum_qty' => $requestedStock->minimum_qty,
+                                'expired_date' => $requestedStock->expired_date,
+                                'location' => $requestedStock->location,
+                                'dept_owner_id' => $request->requester->dept_id,
+                            ]);
                         }
                     }
                 }
@@ -198,6 +239,7 @@ class ApprovalList extends Component
                     'text' => 'Request has been approved successfully.'
                 ]);
                 $this->dispatch('approvalUpdated');
+                $this->dispatch('approvalUpdated')->to(Sidebar::class);
             }
         } catch (\Exception $e) {
             $this->dispatch('swal', [
@@ -242,6 +284,7 @@ class ApprovalList extends Component
                     'text' => 'Request has been rejected successfully.'
                 ]);
                 $this->dispatch('approvalUpdated');
+                $this->dispatch('approvalUpdated')->to(Sidebar::class);
             }
         } catch (\Exception $e) {
             $this->dispatch('swal', [
@@ -260,6 +303,8 @@ class ApprovalList extends Component
         $this->selectedRequest = null;
         $this->rejectReason = '';
         $this->approvalReason = '';
+        $this->showApprovalReason = false; // Reset visibility
+        $this->showRejectReason = false;
         $this->dispatch('modal-closed');
     }
 
@@ -273,7 +318,7 @@ class ApprovalList extends Component
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
             ->where('approvals.dept_id', $deptId)
             // ->whereIn('requests.status', ['pending', 'waiting manager'])
-            ->orderBy('requests.request_no', 'asc')
+            ->orderBy('requests.request_no', 'desc')
             ->select([
                 'requests.request_no',
                 'requests.created_at as request_date',

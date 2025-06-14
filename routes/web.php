@@ -2,6 +2,7 @@
 
 use App\Livewire\Reject;
 use App\Livewire\History;
+use App\Livewire\TestPage;
 use App\Models\Department;
 use App\Livewire\Dashboard;
 use App\Livewire\ShowStock;
@@ -52,3 +53,5 @@ Route::get('/testmail', function () {
     Mail::to('uztadz.jablinx@gmail.com')->send(new \App\Mail\SendApprovalmanager($name, 'https://www.google .com/'));
     return [$department->name, $department->pic_id, $department->manager_id];
 });
+
+Route::get('/test', TestPage::class)->name('test-page');

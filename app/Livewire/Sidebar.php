@@ -18,14 +18,45 @@ class Sidebar extends Component
     public $new_password;
     public $new_password_confirmation;
 
-    protected $listeners = ['proceed-password-change' => 'changePassword'];
+    protected $listeners = [
+        'proceed-password-change' => 'changePassword',
+        'approvalUpdated' => 'refreshApprovalCount'
+    ];
+
+    public function refreshApprovalCount()
+    {
+        $user = Auth::user();
+        if ($user) {
+            $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                ->where('stocks.dept_owner_id', $user->dept_id)
+                ->when($user->role_id == 2, function ($query) {
+                    $query->where('status', 'waiting manager');
+                })
+                ->when($user->role_id == 3, function ($query) {
+                    $query->whereIn('status', ['pending']);
+                })
+                ->count() ?? 0;
+        } else {
+            $this->approvalCount = 0;
+        }
+    }
 
     public function mount()
     {
-        $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-            ->where('stocks.dept_owner_id', Auth::user()->dept_id)
-            ->whereIn('status', ['pending', 'waiting manager'])
-            ->count();
+        $user = Auth::user();
+        if ($user) {
+            $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                ->where('stocks.dept_owner_id', $user->dept_id)
+                ->when($user->role_id == 2, function ($query) {
+                    $query->where('status', 'waiting manager');
+                })
+                ->when($user->role_id == 3, function ($query) {
+                    $query->whereIn('status', ['pending']);
+                })
+                ->count() ?? 0;
+        } else {
+            $this->approvalCount = 0;
+        }
     }
 
     public function openChangePasswordModal()

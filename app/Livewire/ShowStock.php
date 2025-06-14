@@ -60,9 +60,30 @@ class ShowStock extends Component
         $this->dispatch('modal-closed');
     }
 
+    public function confirmSubmitRequest()
+    {
+        $this->validate();
+
+        $this->dispatch('swal-confirm', [
+            'title' => 'Are you sure?',
+            'text' => 'Do you want to submit this stock request?',
+            'icon' => 'warning',
+            'confirmButtonText' => 'Yes, submit it!',
+            'cancelButtonText' => 'Cancel'
+        ]);
+    }
+
+    #[\Livewire\Attributes\On('doSubmitRequest')]
     public function submitRequest()
     {
-
+        $role_id = Auth::user()->role_id;
+        if ($role_id == 2) {
+            $status = 'approved';
+        } elseif ($role_id == 3) {
+            $status = 'waiting manager';
+        } else {
+            $status = 'pending';
+        }
         try {
             $this->validate();
 
@@ -92,6 +113,7 @@ class ShowStock extends Component
                 $department = Department::find($deptId);
                 $pic_id = $department ? $department->pic_id : null;
                 $manager_id = $department ? $department->manager_id : null;
+
                 $approval = Approval::create([
                     'dept_id'   => $deptId,
                     'assigned_pic_id' => $pic_id,
@@ -113,6 +135,7 @@ class ShowStock extends Component
             }
 
             try {
+
                 Request::create([
                     'request_no'   => $this->request_no,
                     'reagent_id'   => $this->reagent_id,
@@ -120,14 +143,35 @@ class ShowStock extends Component
                     'purpose'      => $this->purpose,
                     'requested_by' => $this->requested_by,
                     'approval_id'  => $approval->id,
-                    'status'       => 'pending',
+                    'status'       => $status,
                 ]);
                 // Mail::to mail here
-                $deptOwnerId = Stock::find($this->reagent_id)->dept_owner_id;
-                $mailPicId = Department::find($deptOwnerId)->pic_id;
-                $pic = User::find($mailPicId);
+                $deptOwnerId = $stock->dept_owner_id;
+                $mailManagerId = Department::find($deptOwnerId)->manager_id;
+                $manager = User::find($mailManagerId);
+                if ($role_id == 2) {
+                    $approval->update([
+                        'approval_reason' => "[System] : This request is created by Manager.",
+                        'assigned_manager_date' => now(),
+                    ]);
+                    $stock->remaining_qty -= $this->request_qty;
+                    $stock->save();
+                    if ($stock->remaining_qty <= $stock->minimum_qty && $stock->remaining_qty <> 0) {
+                        Mail::to($manager->email)->send(new \App\Mail\MinimumStock($manager->name, config('app.url') . '/stock/', $stock->reagent_name, $stock->remaining_qty));
+                    }
+                } elseif ($role_id == 3) {
+                    $approval->update([
+                        'approval_reason' => "[System] : This request is created by PIC.",
+                        'assigned_pic_date' => now(),
+                    ]);
 
-                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/approval/'));
+                    Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, config('app.url') . '/approval/'));
+                } else {
+                    $mailPicId = Department::find($deptOwnerId)->pic_id;
+                    $pic = User::find($mailPicId);
+
+                    Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/approval/'));
+                }
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
@@ -161,6 +205,7 @@ class ShowStock extends Component
                 'text' => 'Failed to submit request: ' . $e->getMessage()
             ]);
         }
+        $this->dispatch('approvalUpdated')->to(Sidebar::class);
     }
 
     public function mount()

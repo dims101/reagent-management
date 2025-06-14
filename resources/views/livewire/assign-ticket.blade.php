@@ -24,11 +24,17 @@
                         @forelse ($tickets as $ticket)
                             <tr>
                                 <td>
-                                    @if (in_array(auth()->user()->role->id ?? auth()->user()->role, [1, 2, 3]))
+                                    @if (in_array(auth()->user()->role->id ?? auth()->user()->role, [2, 3]))
                                         @if ($ticket->status === 'open')
                                             <a href="#" wire:click.prevent="openModal({{ $ticket->id }})"
                                                 title="Edit">
                                                 <i class="fas fa-edit text-primary"></i>
+                                            </a>
+                                        @endif
+                                        @if ($ticket->status === 'assigned')
+                                            <a href="#" wire:click.prevent="closeTicket({{ $ticket->id }})"
+                                                title="Close">
+                                                <i class="fas fa-check text-success"></i>
                                             </a>
                                         @endif
                                     @endif
@@ -45,7 +51,7 @@
                                 </td>
                                 <td>{{ $ticket->spk_no }}</td>
                                 <td>{{ $ticket->expected_date ? $ticket->expected_date->format('d-m-Y') : '-' }}</td>
-                                <td>{{ optional($ticket->reagent)->reagent_name ?? '-' }}</td>
+                                <td>{{ optional($ticket->reagent)->name ?? '-' }}</td>
                                 <td>{{ $ticket->request_qty . ' ' . (optional($ticket->reagent)->quantity_uom ?? '') }}
                                 </td>
                                 <td>{{ $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-' }}</td>
@@ -324,6 +330,7 @@
                     }
                 });
             });
+
             document.addEventListener('swal', function(e) {
                 const alertData = e.detail[0];
                 swal({
@@ -333,6 +340,37 @@
                     button: "OK"
                 });
             });
+
+            document.addEventListener('swal-confirm-close', function(e) {
+                const alertData = e.detail[0];
+                swal({
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
+                    buttons: {
+                        cancel: {
+                            text: alertData.cancelButtonText || "Cancel",
+                            value: false,
+                            visible: true,
+                            className: "btn btn-secondary btn-pill",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: alertData.confirmButtonText || "Yes",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-success btn-pill",
+                            closeModal: true
+                        }
+                    }
+                }).then(function(result) {
+                    if (result) {
+                        Livewire.dispatch('doClose');
+                    }
+                });
+            });
+        }, {
+            once: true
         });
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -352,6 +390,8 @@
                     label.innerHTML = fileName;
                 }
             });
+        }, {
+            once: true
         });
     </script>
 @endpush

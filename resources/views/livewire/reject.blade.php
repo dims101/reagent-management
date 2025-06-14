@@ -3,7 +3,7 @@
     <div class="row">
         <div class="col-md-12">
             <div class="card">
-                <div class="card-body">
+                <div class="card-body" wire:ignore>
                     <table class="table table-hover table-striped display datatable text-center">
                         <thead class="thead-light">
                             <tr>
@@ -40,7 +40,7 @@
         {{-- Modal Detail --}}
         <!-- Modal -->
         <div class="modal" id="modalDetail" tabindex="-1" aria-labelledby="modalDetailLabel" aria-hidden="true"
-            wire:ignore>
+            wire:ignore.self>
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
                     <div class="modal-header bg-primary text-white">
@@ -70,7 +70,7 @@
                                         <input type="text" class="form-control font-italic"
                                             wire:model="detail_request_qty" readonly>
                                         <div class="input-group-append">
-                                            <span class="input-group-text" wire:model="detail_quantity_uom"></span>
+                                            <span class="input-group-text">{{ $detail_quantity_uom ?? '' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -92,7 +92,7 @@
                                         <input type="text" class="form-control font-italic"
                                             wire:model="detail_request_qty" readonly>
                                         <div class="input-group-append">
-                                            <span class="input-group-text" wire:model="detail_quantity_uom"></span>
+                                            <span class="input-group-text">{{ $detail_quantity_uom ?? '' }}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -139,11 +139,6 @@
                 });
 
                 window.addEventListener('livewire:initialized', function() {
-                    setTimeout(initDataTable, 300);
-                }, {
-                    once: true
-                });
-                window.addEventListener('modal-closed', function() {
                     setTimeout(initDataTable, 300);
                 }, {
                     once: true

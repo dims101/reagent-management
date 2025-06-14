@@ -24,8 +24,12 @@
                     <input type="number" wire:model.defer="quantity" class="form-control" min="1" required
                         placeholder="Quantity">
                     <div class="input-group-append">
-                        <input type="text" class="form-control" wire:model="uom" placeholder="UoM" required
-                            style="width: 80px;" readonly>
+                        <select class="form-control" wire:model="uom" required>
+                            <option value="">UoM</option>
+                            <option value="pillow">pillow</option>
+                            <option value="mg">mg</option>
+                            <option value="mL">mL</option>
+                        </select>
                     </div>
                 </div>
                 @error('quantity')
@@ -53,20 +57,18 @@
                 @enderror
             </div>
             <!-- Reagent Name -->
-            <div class="form-group col-md-6">
+            <div class="form-group col-md-6" wire:ignore>
                 <label class="font-weight-medium">Reagent Name</label>
-                <select wire:model.live="reagent_id" class="form-control" required>
-                    <option value="">Select Reagent</option>
-                    @foreach ($reagents as $id => $reagent_name)
-                        <option value="{{ $id }}">{{ $reagent_name }}</option>
+                <select id="reagent_name" class="form-control @error('reagent_id') is-invalid @enderror"
+                    wire:model.live="reagent_id">
+                    <option value="">-- Select Reagent --</option>
+                    @foreach ($reagents as $reagent)
+                        <option value="{{ $reagent->id }}">{{ $reagent->name }}</option>
                     @endforeach
                 </select>
                 @error('reagent_id')
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
-                @if ($remaining_qty)
-                    <small class="ml-3 text-muted">**Remaining quantity: {{ $remaining_qty . ' ' . $uom }}</small>
-                @endif
             </div>
         </div>
         <!-- Purpose -->
@@ -96,7 +98,18 @@
 </div>
 @push('scripts')
     <script>
+        function initChoices() {
+            const reagentSelect = document.getElementById('reagent_name');
+            if (reagentSelect && reagentSelect.choices) {
+                reagentSelect.choices.destroy();
+            }
+            new Choices('#reagent_name', {
+                searchEnabled: true,
+                itemSelectText: '',
+            });
+        }
         document.addEventListener('livewire:navigated', function() {
+            initChoices();
             Livewire.on('swal', function(data) {
                 const alertData = data[0];
                 if (alertData.then) {
@@ -121,6 +134,15 @@
                 }
             });
             Livewire.on('swal-success', function(data) {
+                swal({
+                    title: data.title,
+                    text: data.text,
+                    icon: data.icon,
+                    button: false,
+                    timer: 50
+                });
+            });
+            Livewire.on('swal-error', function(data) {
                 swal({
                     title: data.title,
                     text: data.text,

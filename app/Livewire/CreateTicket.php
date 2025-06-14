@@ -4,6 +4,7 @@ namespace App\Livewire;
 
 use App\Models\Stock;
 use App\Models\Ticket;
+use App\Models\Reagent;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
@@ -20,7 +21,7 @@ class CreateTicket extends Component
     public $attachment;
     public $start_date;
     public $end_date;
-    public $remaining_qty;
+
     protected $listeners = [
         'saveTicket' => 'saveTicket',
     ];
@@ -31,11 +32,16 @@ class CreateTicket extends Component
         'uom' => 'required|string',
         'purpose' => 'required|string',
         'expected_finish_date' => 'required|date',
-        'reagent_id' => 'required|exists:stocks,id',
+        'reagent_id' => 'required',
         'start_date' => 'nullable|date',
         'end_date' => 'nullable|date|after_or_equal:start_date',
         'attachment' => 'nullable|string|max:255',
     ];
+
+    public function updatedReagentId($value)
+    {
+        $this->reagent_id = $value['value'];
+    }
 
     public function getLastSpkNo()
     {
@@ -73,57 +79,53 @@ class CreateTicket extends Component
                     'closeModal' => true,
                 ],
             ],
-            'then' => 'saveTicket', // Custom event for Livewire JS
+            'then' => 'saveTicket',
         ]);
     }
 
     public function saveTicket()
     {
-        // dd('Saving ticket...'); // Debugging line, remove in production
-        Ticket::create([
-            'spk_no' => $this->spk_no,
-            'request_qty' => $this->quantity,
-            'requested_by' => Auth::id(),
-            'reagent_id' => $this->reagent_id,
-            'purpose' => $this->purpose,
-            'expected_date' => $this->expected_finish_date,
-            'start_date' => $this->start_date,
-            'end_date' => $this->end_date,
-            'attachment' => $this->attachment,
-            'status' => 'open',
-        ]);
+        try {
+            // Validate again before saving
+            $this->validate();
 
-        $this->reset(['quantity', 'uom', 'purpose', 'expected_finish_date', 'reagent_id', 'attachment', 'start_date', 'end_date']);
-        $this->getLastSpkNo(); // Reset SPK number to the next available
+            $ticket = Ticket::create([
+                'spk_no' => $this->spk_no,
+                'request_qty' => $this->quantity,
+                'requested_by' => Auth::id(),
+                'reagent_id' => $this->reagent_id,
+                'purpose' => $this->purpose,
+                'uom' => $this->uom,
+                'expected_date' => $this->expected_finish_date,
+                'status' => 'open',
+            ]);
 
-        $this->dispatch('swal-success', [
-            'title' => 'Success!',
-            'text' => 'Ticket has been created.',
-            'icon' => 'success',
-        ]);
-    }
+            // Reset form fields
+            $this->reset(['quantity', 'uom', 'purpose', 'expected_finish_date', 'reagent_id', 'attachment', 'start_date', 'end_date']);
+            $this->getLastSpkNo(); // Reset SPK number to the next available
 
-    // Fixed method - using updatedReagentId instead of listener
-    public function updatedReagentId()
-    {
-        if ($this->reagent_id) {
-            $selectedStock = Stock::find($this->reagent_id);
-            if ($selectedStock) {
-                $this->uom = $selectedStock->quantity_uom ?? '';
-                $this->remaining_qty = $selectedStock->remaining_qty ?? 0;
-            } else {
-                $this->uom = '';
-            }
-        } else {
-            $this->uom = '';
-            $this->remaining_qty = 0;
+            // Show success message
+            $this->dispatch('swal-success', [
+                'title' => 'Success!',
+                'text' => 'Ticket has been created successfully.',
+                'icon' => 'success',
+            ]);
+        } catch (\Exception $e) {
+            // Show error message
+            $this->dispatch('swal-error', [
+                'title' => 'Error!',
+                'text' => 'Failed to create ticket: ' . $e->getMessage(),
+                'icon' => 'error',
+            ]);
         }
     }
 
     public function render()
     {
         return view('livewire.create-ticket', [
-            'reagents' => Stock::pluck('reagent_name', 'id'),
+            'reagents' => Reagent::select('name', 'id')
+                ->where('type', 'Ticket')
+                ->get(),
         ]);
     }
 }
