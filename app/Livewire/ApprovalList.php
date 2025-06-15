@@ -29,13 +29,12 @@ class ApprovalList extends Component
 
     public function openDetailModal($request_no)
     {
-        $deptId = Auth::user()->dept_id;
+        // $deptId = Auth::user()->dept_id;
 
         $approval = \App\Models\Request::query()
             ->join('approvals', 'requests.approval_id', '=', 'approvals.id')
             ->join('users', 'requests.requested_by', '=', 'users.id')
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-            ->where('approvals.dept_id', $deptId)
             ->where('requests.request_no', $request_no)
             ->select([
                 'requests.request_no',
@@ -220,8 +219,8 @@ class ApprovalList extends Component
                                 'catalog_no' => $requestedStock->catalog_no,
                                 'site' => $requestedStock->site,
                                 'lead_time' => $requestedStock->lead_time,
-                                'initial_qty' => $requestedStock->request_qty,
-                                'remaining_qty' => $requestedStock->request_qty,
+                                'initial_qty' => $request->request_qty,
+                                'remaining_qty' => $request->request_qty,
                                 'quantity_uom' => $requestedStock->quantity_uom,
                                 'minimum_qty' => $requestedStock->minimum_qty,
                                 'expired_date' => $requestedStock->expired_date,
@@ -310,13 +309,17 @@ class ApprovalList extends Component
 
     public function render()
     {
-        $deptId = Auth::user()->dept_id;
+        // $deptId = Auth::user()->dept_id;
 
         $approvals = \App\Models\Request::query()
             ->join('approvals', 'requests.approval_id', '=', 'approvals.id')
             ->join('users', 'requests.requested_by', '=', 'users.id')
+            ->join('departments as requester_dept', 'users.dept_id', '=', 'requester_dept.id')
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-            ->where('approvals.dept_id', $deptId)
+            ->join('departments as owner_dept', 'stocks.dept_owner_id', '=', 'owner_dept.id')
+            // ->where('users.dept_id', Auth::user()->id)
+            ->where('approvals.dept_id', Auth::user()->dept_id)
+            ->orWhere('requester_dept.id', Auth::user()->dept_id)
             // ->whereIn('requests.status', ['pending', 'waiting manager'])
             ->orderBy('requests.request_no', 'desc')
             ->select([
@@ -330,6 +333,7 @@ class ApprovalList extends Component
                 'users.name as requester_name',
                 'stocks.remaining_qty',
                 'stocks.quantity_uom',
+                'owner_dept.name as requested_to',
             ])
             ->get()
             ->map(function ($request) {
@@ -343,6 +347,8 @@ class ApprovalList extends Component
                     'purpose'          => $request->purpose,
                     'remaining_qty'    => $request->remaining_qty,
                     'quantity_uom'     => $request->quantity_uom,
+                    'requested_to'     => $request->requested_to,
+                    'requester_id'     => $request->requested_by,
                 ];
             });
 

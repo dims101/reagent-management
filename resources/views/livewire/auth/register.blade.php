@@ -88,7 +88,7 @@
                 <div class="card-title">User List</div>
                 <div class="table-responsive mt-3">
                     <table id="user-datatable" class="display table table-striped table-hover datatable" wire:ignore>
-                        <thead>
+                        <thead class="thead-light">
                             <tr>
                                 <th>NUP</th>
                                 <th>Name</th>
@@ -304,6 +304,7 @@
         // Livewire event listeners
         document.addEventListener('livewire:initialized', () => {
             // User created event
+            setTimeout(initDataTable, 100);
             Livewire.on('userCreated', (event) => {
                 const data = event[0];
                 cleanupTooltips(); // Clean up before showing alert
@@ -311,7 +312,7 @@
                 swal({
                     title: data.title,
                     text: data.message,
-                    type: data.type,
+                    icon: data.icon,
                     buttons: {
                         confirm: {
                             className: 'btn btn-success btn-pill'
@@ -331,7 +332,7 @@
                 swal({
                     title: data.title,
                     text: data.message,
-                    type: data.type,
+                    icon: data.icon,
                     buttons: {
                         confirm: {
                             className: 'btn btn-success btn-pill'
@@ -371,10 +372,10 @@
                 swal({
                     title: data.title,
                     text: data.message,
-                    type: data.type,
+                    icon: data.icon,
                     buttons: {
                         confirm: {
-                            className: data.type === 'error' ? 'btn btn-danger btn-pill' :
+                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
                                 'btn btn-success btn-pill'
                         }
                     }
@@ -388,16 +389,16 @@
                 swal({
                     title: 'Confirm Update',
                     text: "Are you sure you want to update this user?",
-                    type: 'warning',
+                    icon: 'warning',
                     buttons: {
-                        confirm: {
-                            text: 'Yes, update it!',
-                            className: 'btn btn-primary btn-pill'
-                        },
                         cancel: {
                             visible: true,
                             text: 'Cancel',
                             className: 'btn btn-secondary btn-pill'
+                        },
+                        confirm: {
+                            text: 'Yes, update it!',
+                            className: 'btn btn-primary btn-pill'
                         }
                     }
                 }).then((willUpdate) => {
@@ -426,17 +427,18 @@
             swal({
                 title: 'Are you sure?',
                 text: "This user will be deleted permanently!",
-                type: 'warning',
+                icon: 'warning',
                 buttons: {
-                    confirm: {
-                        text: 'Yes, delete it!',
-                        className: 'btn btn-danger btn-pill'
-                    },
                     cancel: {
                         visible: true,
                         text: 'Cancel',
                         className: 'btn btn-secondary btn-pill'
-                    }
+                    },
+                    confirm: {
+                        text: 'Yes, delete it!',
+                        className: 'btn btn-danger btn-pill'
+                    },
+
                 }
             }).then((willDelete) => {
                 if (willDelete) {
@@ -449,8 +451,114 @@
         document.addEventListener('livewire:navigated', function() {
             cleanupTooltips();
             setTimeout(initDataTable, 100);
+            Livewire.on('userCreated', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success btn-pill'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after user creation
+                    setTimeout(initDataTable, 200);
+                });
+            });
+
+            // User updated event
+            Livewire.on('userUpdated', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success btn-pill'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after update
+                    setTimeout(initDataTable, 300);
+                });
+            });
+
+            // User deleted event
+            Livewire.on('userDeleted', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success btn-pill'
+                        }
+                    }
+                }).then(() => {
+                    // Reinitialize DataTable after deletion
+                    setTimeout(initDataTable, 100);
+                });
+            });
+
+            // Generic alert event
+            Livewire.on('showAlert', (event) => {
+                const data = event[0];
+                cleanupTooltips(); // Clean up before showing alert
+
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
+                                'btn btn-success btn-pill'
+                        }
+                    }
+                });
+            });
+
+            // Confirm update event
+            Livewire.on('confirmUpdate', () => {
+                cleanupTooltips(); // Clean up before showing confirmation
+
+                swal({
+                    title: 'Confirm Update',
+                    text: "Are you sure you want to update this user?",
+                    icon: 'warning',
+                    buttons: {
+                        cancel: {
+                            visible: true,
+                            text: 'Cancel',
+                            className: 'btn btn-secondary btn-pill'
+                        },
+                        confirm: {
+                            text: 'Yes, update it!',
+                            className: 'btn btn-primary btn-pill'
+                        }
+                    }
+                }).then((willUpdate) => {
+                    if (willUpdate) {
+
+                        @this.call('updateUser');
+                    }
+                });
+            });
+
+            // Modal closed event
             Livewire.on('registerModalClosed', () => {
                 // Clean up and reinitialize DataTable when modal is closed
+                // alert('Modal closed');
                 cleanupTooltips();
                 setTimeout(initDataTable, 100);
             });

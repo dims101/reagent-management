@@ -23,16 +23,18 @@
                             <tr>
                                 <td>
                                     @if ($ticket->status === 'open')
-                                        <div class="row">
-                                            <a href="#" class="col text-primary" title="Edit"
-                                                wire:click.prevent="editData({{ $ticket->id }})">
-                                                <i class="fa fa-edit"></i>
-                                            </a>
-                                            <a href="#" class="col text-danger" title="Delete"
-                                                wire:click.prevent="deleteData({{ $ticket->id }})">
-                                                <i class="fa fa-trash"></i>
-                                            </a>
-                                        </div>
+                                        @if (optional($ticket->requester)->dept_id == auth()->user()->dept_id)
+                                            <div class="row">
+                                                <a href="#" class="col text-primary" title="Edit"
+                                                    wire:click.prevent="editData({{ $ticket->id }})">
+                                                    <i class="fa fa-edit"></i>
+                                                </a>
+                                                <a href="#" class="col text-danger" title="Delete"
+                                                    wire:click.prevent="deleteData({{ $ticket->id }})">
+                                                    <i class="fa fa-trash"></i>
+                                                </a>
+                                            </div>
+                                        @endif
                                     @endif
                                 </td>
                                 <td>
@@ -173,8 +175,9 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" wire:click="closeEditModal">Cancel</button>
-                        <button type="button" class="btn btn-success" wire:click="updateTicket">
+                        <button type="button" class="btn btn-secondary btn-pill"
+                            wire:click="closeEditModal">Cancel</button>
+                        <button type="button" class="btn btn-success btn-pill" wire:click="updateTicket">
                             <i class="fa fa-check"></i> Submit
                         </button>
                     </div>
@@ -282,6 +285,13 @@
                 setTimeout(initTicketsTable, 100);
             });
         });
+        document.addEventListener('livewire:initialized', function() {
+            setTimeout(initTicketsTable, 100);
+            // Reinitialize DataTable when modal is closed (after edit)
+            Livewire.on('modal-closed', function() {
+                setTimeout(initTicketsTable, 100);
+            });
+        });
 
         // Hide dropdown with delay to allow click events
         document.addEventListener('hide-dropdown-delayed', function() {
@@ -316,6 +326,8 @@
             }).then(function(result) {
                 if (result) {
                     Livewire.dispatch('doDelete');
+                } else {
+                    Livewire.dispatch('modal-closed');
                 }
             });
         });
@@ -327,7 +339,10 @@
                 title: alertData.title,
                 text: alertData.text,
                 icon: alertData.icon,
-                button: "OK"
+                button: {
+                    text: alertData.buttonText || "OK",
+                    className: "btn btn-primary btn-pill"
+                }
             }); // Reinitialize table after any changes
             setTimeout(initTicketsTable, 100);
         });

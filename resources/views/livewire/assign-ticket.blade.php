@@ -32,10 +32,12 @@
                                             </a>
                                         @endif
                                         @if ($ticket->status === 'assigned')
-                                            <a href="#" wire:click.prevent="closeTicket({{ $ticket->id }})"
-                                                title="Close">
-                                                <i class="fas fa-check text-success"></i>
-                                            </a>
+                                            @if (in_array(auth()->user()->role->id ?? auth()->user()->role, [2, 3]))
+                                                <a href="#" wire:click.prevent="closeTicket({{ $ticket->id }})"
+                                                    title="Close">
+                                                    <i class="fas fa-check text-success"></i>
+                                                </a>
+                                            @endif
                                         @endif
                                     @endif
                                 </td>

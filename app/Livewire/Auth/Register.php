@@ -50,31 +50,30 @@ class Register extends Component
         try {
             $existingUser = User::where('role_id', $roleId)
                 ->where('dept_id', $deptId)
-                ->first();
+                ->first() ?? null;
 
             if ($existingUser && $existingUser->id != $userId) {
                 $existingUser->update(['role_id' => 4]);
+            }
+            RoleAssignment::create([
+                'user_id' => $userId,
+                'role_id' => $roleId,
+            ]);
 
-                RoleAssignment::create([
-                    'user_id' => $userId,
-                    'role_id' => $roleId,
+            if ($roleId == 2) {
+                Department::findOrFail($deptId)->update([
+                    'manager_id' => $userId
                 ]);
-
-                if ($roleId == 2) {
-                    Department::findOrFail($deptId)->update([
-                        'manager_id' => $userId
-                    ]);
-                } else if ($roleId == 3) {
-                    Department::findOrFail($deptId)->update([
-                        'pic_id' => $userId
-                    ]);
-                }
+            } else if ($roleId == 3) {
+                Department::findOrFail($deptId)->update([
+                    'pic_id' => $userId
+                ]);
             }
         } catch (\Exception $e) {
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
                 'message' => 'Failed to assign role. ' . $e->getMessage(),
-                'type' => 'error'
+                'icon' => 'error'
             ]);
         }
         return;
@@ -110,8 +109,10 @@ class Register extends Component
             $this->dispatch('userCreated', [
                 'title' => 'Success!',
                 'message' => 'User registered successfully.',
-                'type' => 'success'
+                'icon' => 'success'
             ]);
+
+            $this->dispatch('registerModalClosed');
 
             // Auto login (if this is for registration page)
             // Auth::login($user, true);
@@ -121,7 +122,7 @@ class Register extends Component
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
                 'message' => 'Registration failed. Please try again. ' . $e->getMessage(),
-                'type' => 'error'
+                'icon' => 'error'
             ]);
         }
     }
@@ -180,13 +181,13 @@ class Register extends Component
             $this->dispatch('userUpdated', [
                 'title' => 'Updated!',
                 'message' => 'User updated successfully.',
-                'type' => 'success'
+                'icon' => 'success'
             ]);
         } catch (\Exception $e) {
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
                 'message' => 'Failed to update user. Please try again. ' . $e->getMessage(),
-                'type' => 'error'
+                'icon' => 'error'
             ]);
         }
     }
@@ -207,13 +208,13 @@ class Register extends Component
             $this->dispatch('userDeleted', [
                 'title' => 'Deleted!',
                 'message' => 'User deleted successfully.',
-                'type' => 'success'
+                'icon' => 'success'
             ]);
         } catch (\Exception $e) {
             $this->dispatch('showAlert', [
                 'title' => 'Error!',
                 'message' => 'Failed to delete user. Please try again.',
-                'type' => 'error'
+                'icon' => 'error'
             ]);
         }
     }

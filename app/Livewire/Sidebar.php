@@ -27,15 +27,19 @@ class Sidebar extends Component
     {
         $user = Auth::user();
         if ($user) {
-            $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-                ->where('stocks.dept_owner_id', $user->dept_id)
-                ->when($user->role_id == 2, function ($query) {
-                    $query->where('status', 'waiting manager');
-                })
-                ->when($user->role_id == 3, function ($query) {
-                    $query->whereIn('status', ['pending']);
-                })
-                ->count() ?? 0;
+            if ($user->role_id == 2) {
+                $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                    ->where('stocks.dept_owner_id', $user->dept_id)
+                    ->where('status', 'waiting manager')
+                    ->count() ?? 0;
+            } elseif ($user->role_id == 3) {
+                $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                    ->where('stocks.dept_owner_id', $user->dept_id)
+                    ->where('status', 'pending')
+                    ->count() ?? 0;
+            } else {
+                $this->approvalCount = 0;
+            }
         } else {
             $this->approvalCount = 0;
         }
@@ -45,15 +49,19 @@ class Sidebar extends Component
     {
         $user = Auth::user();
         if ($user) {
-            $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-                ->where('stocks.dept_owner_id', $user->dept_id)
-                ->when($user->role_id == 2, function ($query) {
-                    $query->where('status', 'waiting manager');
-                })
-                ->when($user->role_id == 3, function ($query) {
-                    $query->whereIn('status', ['pending']);
-                })
-                ->count() ?? 0;
+            if ($user->role_id == 2) {
+                $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                    ->where('stocks.dept_owner_id', $user->dept_id)
+                    ->where('status', 'waiting manager')
+                    ->count() ?? 0;
+            } elseif ($user->role_id == 3) {
+                $this->approvalCount = Request::join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+                    ->where('stocks.dept_owner_id', $user->dept_id)
+                    ->where('status', 'pending')
+                    ->count() ?? 0;
+            } else {
+                $this->approvalCount = 0;
+            }
         } else {
             $this->approvalCount = 0;
         }

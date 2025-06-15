@@ -40,10 +40,12 @@ class ShowTicket extends Component
         $query = Reagent::query();
 
         if ($search) {
-            $query->where('name', 'like', "%{$search}%");
+            $query->where('name', 'like', "%{$search}%")
+                ->where('type', 'Ticket');
         }
 
         $this->reagents = $query->orderBy('name')
+            ->where('type', 'Ticket')
             ->limit(50)
             ->get();
     }
@@ -205,12 +207,14 @@ class ShowTicket extends Component
         $user = Auth::user();
 
         if ($user->dept_id == 1) {
-            $tickets = Ticket::with(['reagent', 'requester.department'])->get();
+            $tickets = Ticket::with(['reagent', 'requester.department'])
+                ->orderBy('spk_no', 'desc')->get();
         } else {
             $tickets = Ticket::with(['reagent', 'requester.department'])
                 ->whereHas('requester', function ($q) use ($user) {
                     $q->where('dept_id', $user->dept_id);
-                })->get();
+                })->orderBy('spk_no', 'desc')
+                ->get();
         }
 
         return view('livewire.show-ticket')

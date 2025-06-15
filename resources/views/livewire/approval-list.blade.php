@@ -12,6 +12,7 @@
                                     <th>Request No</th>
                                     <th>Request Date</th>
                                     <th>Requester</th>
+                                    <th>Requested to</th>
                                     <th>Detail</th>
                                 </tr>
                             </thead>
@@ -19,7 +20,10 @@
                                 @php
                                     $filteredApprovals = $approvals;
                                     if (auth()->user()->role_id == 2) {
-                                        $filteredApprovals = collect($approvals)->where('status', 'waiting manager');
+                                        $filteredApprovals = collect($approvals)
+                                            ->where('status', 'waiting manager')
+                                            ->where('requested_to', auth()->user()->department->name)
+                                            ->values();
                                     }
                                 @endphp
 
@@ -29,8 +33,9 @@
                                             <div class="row">
                                                 <div class="col-2 text-right mr-0">
                                                     @if (
-                                                        (auth()->user()->role_id == 2 && $approval['status'] === 'waiting manager') ||
-                                                            (auth()->user()->role_id == 3 && $approval['status'] === 'pending'))
+                                                        ((auth()->user()->role_id == 2 && $approval['status'] === 'waiting manager') ||
+                                                            (auth()->user()->role_id == 3 && $approval['status'] === 'pending')) &&
+                                                            $approval['requested_to'] == auth()->user()->department->name)
                                                         <a href="#" class="me-2 text-primary"
                                                             title="Approve/Reject"
                                                             wire:click.prevent="openApprovalModal('{{ $approval['request_no'] }}')">
@@ -57,6 +62,7 @@
                                         <td>{{ $approval['request_no'] }}</td>
                                         <td>{{ \Carbon\Carbon::parse($approval['request_date'])->format('d-m-Y') }}</td>
                                         <td>{{ $approval['requester'] }}</td>
+                                        <td>{{ $approval['requested_to'] }}</td>
                                         <td>
                                             <a href="#" class="text-info mr-2" title="View Detail"
                                                 wire:click.prevent="openDetailModal('{{ $approval['request_no'] }}')">

@@ -18,6 +18,7 @@ class CreateStock extends Component
     public $input_date;
     public $po_no;
     public $reagent_name;
+    public $reagent_id; // Add this to store selected reagent ID
     public $maker;
     public $catalog_no;
     public $expired_date;
@@ -29,22 +30,74 @@ class CreateStock extends Component
     public $minimum_qty;
     public $location;
 
+    // Server-side search properties
+    public $search = '';
+    public $reagents = [];
+    public $showDropdown = false;
+
     // Add property for owner name display
     public $owner_name;
-    public function updatedReagentName($value)
-    {
-        $selectedReagent = Reagent::find($value['value']);
-        $this->reagent_name = $selectedReagent->name ?? '';
-        // dd($this->reagent_name);
-        $this->catalog_no = $selectedReagent->catalog_no ?? '';
-        $this->maker = $selectedReagent->vendor ?? '';
-    }
 
     public function mount()
     {
         $this->input_date = now()->format('Y-m-d');
         $this->dept_owner_id = Auth::user()->dept_id ?? null;
         $this->owner_name = Auth::user()->department ? Auth::user()->department->name : 'Unknown Department';
+
+        // Initialize with empty reagents array
+        $this->reagents = [];
+    }
+
+    // Server-side search method
+    public function updatedSearch()
+    {
+        if (strlen($this->search) >= 2) { // Start searching after 2 characters
+            $this->reagents = Reagent::select('id', 'name', 'catalog_no', 'vendor')
+                ->where('type', 'Stock')
+                ->where('name', 'LIKE', '%' . $this->search . '%')
+                ->limit(50) // Limit results for performance
+                ->get()
+                ->toArray();
+
+            $this->showDropdown = true;
+        } else {
+            $this->reagents = [];
+            $this->showDropdown = false;
+        }
+    }
+
+    // Method to select reagent
+    public function selectReagent($reagentId)
+    {
+        $selectedReagent = Reagent::find($reagentId);
+
+        if ($selectedReagent) {
+            $this->reagent_id = $selectedReagent->id;
+            $this->reagent_name = $selectedReagent->name;
+            $this->search = $selectedReagent->name; // Update search field with selected name
+            $this->catalog_no = $selectedReagent->catalog_no ?? '';
+            $this->maker = $selectedReagent->vendor ?? '';
+            $this->showDropdown = false;
+            $this->reagents = []; // Clear the dropdown
+        }
+    }
+
+    // Hide dropdown when clicking outside
+    public function hideDropdown()
+    {
+        $this->showDropdown = false;
+    }
+
+    // Clear search and selection
+    public function clearSearch()
+    {
+        $this->search = '';
+        $this->reagent_name = '';
+        $this->reagent_id = null;
+        $this->catalog_no = '';
+        $this->maker = '';
+        $this->reagents = [];
+        $this->showDropdown = false;
     }
 
     protected function rules()
@@ -57,7 +110,7 @@ class CreateStock extends Component
             'catalog_no'     => 'nullable|string|max:100',
             'expired_date'   => 'required|date|after_or_equal:input_date',
             'initial_qty'    => 'required|numeric|min:0.01',
-            'quantity_uom'   => 'required|string|in:pillow,g,mg|max:20',
+            'quantity_uom'   => 'required|string|in:pillow,g,mg,mL|max:20', // Added mL
             'site'           => 'nullable|string|max:100',
             'location'       => 'nullable|string|max:100',
             'lead_time'      => 'nullable|integer|min:0',
@@ -172,6 +225,7 @@ class CreateStock extends Component
             $this->reset([
                 'po_no',
                 'reagent_name',
+                'reagent_id',
                 'maker',
                 'catalog_no',
                 'initial_qty',
@@ -180,12 +234,15 @@ class CreateStock extends Component
                 'location',
                 'lead_time',
                 'minimum_qty',
-                'expired_date'
+                'expired_date',
+                'search'
             ]);
 
             // Reset dates and owner
             $this->input_date = now()->format('Y-m-d');
             $this->dept_owner_id = Auth::user()->dept_id;
+            $this->reagents = [];
+            $this->showDropdown = false;
 
             // Enhanced SweetAlert for success
             $this->dispatch('swal', [
@@ -195,9 +252,6 @@ class CreateStock extends Component
                 'timer' => 200,
                 'showConfirmButton' => false
             ]);
-
-            // Also dispatch a general success event
-            // $this->dispatch('stock-created-successfully');
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Stock creation failed: ' . $e->getMessage());
@@ -218,35 +272,8 @@ class CreateStock extends Component
         $this->validateOnly($propertyName);
     }
 
-    private function resetForm()
-    {
-        $this->reset([
-            'po_no',
-            'reagent_name',
-            'maker',
-            'catalog_no',
-            'initial_qty',
-            'quantity_uom',
-            'site',
-            'location',
-            'lead_time',
-            'minimum_qty'
-        ]);
-
-        $this->input_date = now()->format('Y-m-d');
-        $this->expired_date = '';
-        $this->dept_owner_id = Auth::user()->dept_id ?? null;
-        $this->owner_name = Auth::user()->name ?? 'Unknown User';
-
-        $this->resetValidation();
-    }
-
     public function render()
     {
-        return view('livewire.create-stock', [
-            'reagents' => Reagent::select('id', 'name')
-                ->where('type', 'Stock')
-                ->get()
-        ]);
+        return view('livewire.create-stock');
     }
 }

@@ -38,25 +38,66 @@
 
                     <div class="row">
                         <div class="col-md-6">
-                            <!-- Reagent Name -->
-                            <div class="form-group" wire:ignore>
-                                <label for="reagent_name" class="form-label">
+                            <!-- Reagent Name with Server-side Search -->
+                            <div class="form-group position-relative">
+                                <label for="reagent_search" class="form-label">
                                     Reagent Name <span class="text-danger">*</span>
                                 </label>
-                                {{-- <input type="text" class="form-control @error('reagent_name') is-invalid @enderror"
-                                    id="reagent_name" wire:model.defer="reagent_name" placeholder="Enter Reagent Name"
-                                    maxlength="100" required> --}}
-                                <select id="reagent_name"
-                                    class="form-control @error('reagent_name') is-invalid @enderror"
-                                    wire:model.live="reagent_name">
-                                    <option value="">-- Select Reagent --</option>
-                                    @foreach ($reagents as $reagent)
-                                        <option value="{{ $reagent->id }}">{{ $reagent->name }}</option>
-                                    @endforeach
-                                </select>
+                                <div class="input-group">
+                                    <input type="text"
+                                        class="form-control @error('reagent_name') is-invalid @enderror"
+                                        id="reagent_search" wire:model.live.debounce.300ms="search"
+                                        placeholder="Type to search reagent..." autocomplete="off">
+                                    @if ($search)
+                                        <button type="button" class="btn btn-outline-secondary"
+                                            wire:click="clearSearch">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    @endif
+                                </div>
+
+                                <!-- Dropdown Results -->
+                                @if ($showDropdown && count($reagents) > 0)
+                                    <div class="dropdown-menu show position-absolute w-100 mt-1"
+                                        style="z-index: 1050; max-height: 300px; overflow-y: auto;">
+                                        @foreach ($reagents as $reagent)
+                                            <a href="#"
+                                                class="dropdown-item d-flex justify-content-between align-items-center"
+                                                wire:click.prevent="selectReagent({{ $reagent['id'] }})">
+                                                <div>
+                                                    <strong>{{ $reagent['name'] }}</strong>
+                                                    @if ($reagent['catalog_no'])
+                                                        <br><small class="text-muted">Catalog:
+                                                            {{ $reagent['catalog_no'] }}</small>
+                                                    @endif
+                                                    @if ($reagent['vendor'])
+                                                        <br><small class="text-muted">Vendor:
+                                                            {{ $reagent['vendor'] }}</small>
+                                                    @endif
+                                                </div>
+                                            </a>
+                                        @endforeach
+                                    </div>
+                                @elseif($showDropdown && $search && count($reagents) === 0)
+                                    <div class="dropdown-menu show position-absolute w-100 mt-1" style="z-index: 1050;">
+                                        <div class="dropdown-item-text text-muted">
+                                            <i class="fas fa-search"></i> No reagents found for "{{ $search }}"
+                                        </div>
+                                    </div>
+                                @endif
+
+                                <!-- Hidden input to store selected reagent name for validation -->
+                                <input type="hidden" wire:model="reagent_name">
+
                                 @error('reagent_name')
-                                    <div class="invalid-feedback">{{ $message }}</div>
+                                    <div class="invalid-feedback d-block">{{ $message }}</div>
                                 @enderror
+
+                                @if ($search && strlen($search) < 2 && strlen($search) > 0)
+                                    <small class="form-text text-muted">
+                                        <i class="fas fa-info-circle"></i> Type at least 2 characters to search
+                                    </small>
+                                @endif
                             </div>
                         </div>
                         <div class="col-md-6">
@@ -117,8 +158,9 @@
                                 </label>
                                 <div class="input-group">
                                     <input type="number" step="0.01" min="0.01"
-                                        class="form-control @error('initial_qty') is-invalid @enderror" id="initial_qty"
-                                        wire:model="initial_qty" placeholder="Enter Quantity" required>
+                                        class="form-control @error('initial_qty') is-invalid @enderror"
+                                        id="initial_qty" wire:model="initial_qty" placeholder="Enter Quantity"
+                                        required>
                                     <select class="form-control ml-2 @error('quantity_uom') is-invalid @enderror"
                                         wire:model="quantity_uom" style="max-width: 100px;" required>
                                         <option value="">UoM</option>
@@ -177,9 +219,6 @@
                                 </label>
                                 <input type="text" class="form-control bg-light" id="owner_display"
                                     value="{{ $owner_name }}" readonly required>
-                                {{-- <small class="form-text text-muted">
-                                    <i class="fas fa-info-circle"></i> Auto-filled from logged in user
-                                </small> --}}
                             </div>
                         </div>
                     </div>
@@ -246,17 +285,6 @@
 
 @push('scripts')
     <script>
-        function initChoices() {
-            const reagentSelect = document.getElementById('reagent_name');
-            if (reagentSelect && reagentSelect.choices) {
-                reagentSelect.choices.destroy();
-            }
-            new Choices('#reagent_name', {
-                searchEnabled: true,
-                itemSelectText: '',
-            });
-        }
-
         document.addEventListener('livewire:init', () => {
             // Enhanced SweetAlert event listener for success
             Livewire.on('swal', (data) => {
@@ -291,34 +319,6 @@
                 }
             });
 
-            // Alternative success handler
-            // Livewire.on('stock-created-successfully', () => {
-            //     console.log('Stock created successfully!'); // Debug log
-
-            //     // Fallback success notification
-            //     swal({
-            //         icon: 'success',
-            //         title: 'Success!',
-            //         text: 'Stock has been added successfully!',
-            //         buttons: false
-            //     });
-
-            //     // Optional: Show bootstrap notify as well
-            //     if (typeof $.notify !== 'undefined') {
-            //         $.notify({
-            //             icon: 'fa fa-check',
-            //             message: 'Stock has been added successfully!'
-            //         }, {
-            //             type: 'success',
-            //             timer: 1000,
-            //             placement: {
-            //                 from: 'bottom',
-            //                 align: 'right'
-            //             }
-            //         });
-            //     }
-            // });
-
             // Fix Case 3: Real-time validation error alert
             Livewire.on('show-validation-error', (data) => {
                 console.log('Validation error:', data); // Debug log
@@ -341,13 +341,53 @@
                     alert(data[0].message);
                 }
             });
+
+            // SweetAlert confirmation handler
+            Livewire.on('swal-confirm', (data) => {
+                const alertData = data[0];
+                swal({
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
+                    buttons: {
+                        cancel: {
+                            text: alertData.cancelButtonText || "Cancel",
+                            value: false,
+                            visible: true,
+                            className: "btn btn-secondary btn-pill",
+                            closeModal: true,
+                        },
+                        confirm: {
+                            text: alertData.confirmButtonText || "Yes",
+                            value: true,
+                            visible: true,
+                            className: "btn btn-success btn-pill",
+                            closeModal: true
+                        }
+                    }
+                }).then(function(result) {
+                    if (result) {
+                        Livewire.dispatch('doSaveStock');
+                    }
+                });
+            });
+
+            // Hide dropdown when clicking outside
+            document.addEventListener('click', function(event) {
+                const reagentSearch = document.getElementById('reagent_search');
+                const dropdown = document.querySelector('.dropdown-menu.show');
+
+                if (dropdown && reagentSearch && !reagentSearch.contains(event.target) && !dropdown
+                    .contains(event.target)) {
+                    Livewire.dispatch('hideDropdown');
+                }
+            });
         }, {
             once: true
         });
 
         // Additional validation check on form submit
         document.addEventListener('livewire:navigated', function() {
-            initChoices(); // Initialize Choices.js for reagent_name select
             const form = document.querySelector('form');
             if (form) {
                 form.addEventListener('submit', function(e) {
@@ -372,24 +412,17 @@
                 });
             }
 
+            // Re-bind Livewire event listeners after navigation
             Livewire.on('swal', (data) => {
-                console.log('SweetAlert triggered:', data); // Debug log
-
                 const alertData = data[0];
-
-                // Different configurations based on icon type
                 if (alertData.icon === 'success') {
                     swal({
                         icon: alertData.icon,
                         title: alertData.title,
                         text: alertData.text,
                         buttons: false,
-                    }).then(() => {
-                        // Optional: Reload page or redirect after success
-                        // window.location.reload();
                     });
                 } else {
-                    // For error and other types
                     swal({
                         icon: alertData.icon,
                         title: alertData.title,
@@ -432,8 +465,6 @@
                     }
                 });
             });
-
-
         }, {
             once: true
         });

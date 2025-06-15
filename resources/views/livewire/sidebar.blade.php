@@ -42,65 +42,64 @@
                 </div>
             </div>
             <ul class="nav nav-primary">
-                <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
-                    <a href="{{ route('dashboard') }}" wire:navigate>
-                        <i class="fas fa-home"></i>
-                        <p>Dashboard</p>
-                    </a>
-                </li>
-                @php
-                    $userRoleId = auth()->user()->role_id ?? null;
-                @endphp
-                @if ($userRoleId !== 4)
-                    <li class="nav-item {{ request()->routeIs('create-stock') ? 'active' : '' }}">
-                        <a href="{{ route('create-stock') }}" wire:navigate>
-                            <i class="fas fa-plus-circle"></i>
-                            <p>Input Stock</p>
+                @if (auth()->user()->dept_id !== 4)
+                    <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                        <a href="{{ route('dashboard') }}" wire:navigate>
+                            <i class="fas fa-home"></i>
+                            <p>Dashboard</p>
                         </a>
                     </li>
-                @endif
-                <li class="nav-item {{ request()->routeIs('self-stock') ? 'active' : '' }}">
-                    <a href="{{ route('self-stock') }}" wire:navigate>
-                        <i class="fas fa-box-open"></i>
-                        <p>Stock On Hand</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('other-stock') ? 'active' : '' }}">
-                    <a href="/stock/others" wire:navigate>
-                        <i class="fas fa-boxes"></i>
-                        <p>Stock Of Others</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('approval-list') ? 'active' : '' }}">
-                    <a href="/approval" wire:navigate>
-                        <i class="fas fa-clipboard-check"></i>
-                        <p>
-                            Approval List
-                            @if ($approvalCount > 0)
-                                <span class="badge badge-danger ml-2">{{ $approvalCount }}</span>
-                            @endif
-                        </p>
-                    </a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('reject') ? 'active' : '' }}">
-                    <a href="/reject" wire:navigate>
-                        <i class="fas fa-trash"></i>
-                        <p>Reject List</p>
-                    </a>
-                </li>
-                <li class="nav-item {{ request()->routeIs('history') ? 'active' : '' }}">
-                    <a href="/history" wire:navigate>
-                        <i class="fas fa-history"></i>
-                        <p>History List</p>
-                    </a>
-                </li>
-                @if (auth()->user()->dept_id == 1)
-                    <li class="nav-item {{ request()->routeIs('assign-ticket') ? 'active' : '' }}">
-                        <a href="/ticket/assign" wire:navigate>
-                            <i class="fas fa-user-alt"></i>
-                            <p>Assign Ticket Reagent</p>
+                    @if (auth()->user()->role_id !== 4)
+                        <li class="nav-item {{ request()->routeIs('create-stock') ? 'active' : '' }}">
+                            <a href="{{ route('create-stock') }}" wire:navigate>
+                                <i class="fas fa-plus-circle"></i>
+                                <p>Input Stock</p>
+                            </a>
+                        </li>
+                    @endif
+                    <li class="nav-item {{ request()->routeIs('self-stock') ? 'active' : '' }}">
+                        <a href="{{ route('self-stock') }}" wire:navigate>
+                            <i class="fas fa-box-open"></i>
+                            <p>Stock On Hand</p>
                         </a>
                     </li>
+                    <li class="nav-item {{ request()->routeIs('other-stock') ? 'active' : '' }}">
+                        <a href="/stock/others" wire:navigate>
+                            <i class="fas fa-boxes"></i>
+                            <p>Stock Of Others</p>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ request()->routeIs('approval-list') ? 'active' : '' }}">
+                        <a href="/approval" wire:navigate>
+                            <i class="fas fa-clipboard-check"></i>
+                            <p>
+                                Approval List
+                                @if ($approvalCount > 0)
+                                    <span class="badge badge-danger ml-2">{{ $approvalCount }}</span>
+                                @endif
+                            </p>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ request()->routeIs('reject') ? 'active' : '' }}">
+                        <a href="/reject" wire:navigate>
+                            <i class="fas fa-trash"></i>
+                            <p>Reject List</p>
+                        </a>
+                    </li>
+                    <li class="nav-item {{ request()->routeIs('history') ? 'active' : '' }}">
+                        <a href="/history" wire:navigate>
+                            <i class="fas fa-history"></i>
+                            <p>History List</p>
+                        </a>
+                    </li>
+                    @if (auth()->user()->dept_id == 1)
+                        <li class="nav-item {{ request()->routeIs('assign-ticket') ? 'active' : '' }}">
+                            <a href="/ticket/assign" wire:navigate>
+                                <i class="fas fa-user-alt"></i>
+                                <p>Assign Ticket Reagent</p>
+                            </a>
+                        </li>
+                    @endif
                 @endif
                 <li class="nav-item {{ request()->routeIs('create-ticket') ? 'active' : '' }}">
                     <a href="/ticket/create" wire:navigate>

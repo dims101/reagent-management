@@ -29,7 +29,7 @@ class AssignTicket extends Component
     protected $rules = [
         'spk_no' => 'required',
         'expected_date' => 'required|date',
-        'reagent_id' => 'required|exists:stocks,id',
+        'reagent_id' => 'required|exists:reagents,id',
         'start_date' => 'required|date',
         'input_date' => 'required|date',
         'expected_reason' => 'required|string',
@@ -281,7 +281,7 @@ class AssignTicket extends Component
         return view('livewire.assign-ticket', [
             'tickets' => $this->tickets,
             'reagents' => Reagent::where('type', 'Ticket')->pluck('name', 'id'),
-            'users' => User::where('deleted_at', null)->pluck('name', 'id'),
+            'users' => User::where('dept_id', '1')->pluck('name', 'id'),
         ]);
     }
 }
