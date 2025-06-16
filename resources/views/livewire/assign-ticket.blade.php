@@ -54,7 +54,7 @@
                                 <td>{{ $ticket->spk_no }}</td>
                                 <td>{{ $ticket->expected_date ? $ticket->expected_date->format('d-m-Y') : '-' }}</td>
                                 <td>{{ optional($ticket->reagent)->name ?? '-' }}</td>
-                                <td>{{ $ticket->request_qty . ' ' . (optional($ticket->reagent)->quantity_uom ?? '') }}
+                                <td>{{ $ticket->request_qty . ' ' . $ticket->uom ?? '' }}
                                 </td>
                                 <td>{{ $ticket->created_at ? $ticket->created_at->format('d-m-Y') : '-' }}</td>
                                 <td>{{ optional($ticket->requester)->name ?? '-' }}</td>
@@ -339,6 +339,7 @@
                     title: alertData.title,
                     text: alertData.text,
                     icon: alertData.icon,
+                    className: "btn btn-success btn-pill",
                     button: "OK"
                 });
             });

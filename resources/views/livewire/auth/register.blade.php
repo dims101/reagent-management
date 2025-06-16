@@ -113,6 +113,11 @@
                                                 title="Edit">
                                                 <i class="fa fa-edit"></i>
                                             </button>
+                                            <button type="button" class="btn btn-link btn-warning"
+                                                onclick="confirmReset({{ $user->id }})" data-toggle="tooltip"
+                                                title="Reset Password">
+                                                <i class="fa fa-key"></i>
+                                            </button>
                                             <button type="button" class="btn btn-link btn-danger"
                                                 onclick="confirmDelete({{ $user->id }})" data-toggle="tooltip"
                                                 title="Delete">
@@ -364,6 +369,43 @@
                 });
             });
 
+            window.confirmReset = function(id) {
+                swal({
+                    title: 'Reset Password?',
+                    text: "Password will be reset to the user's NUP.",
+                    icon: 'warning',
+                    buttons: {
+                        cancel: {
+                            visible: true,
+                            text: 'Cancel',
+                            className: 'btn btn-secondary btn-pill'
+                        },
+                        confirm: {
+                            text: 'Yes, reset it!',
+                            className: 'btn btn-warning btn-pill'
+                        }
+                    }
+                }).then((willReset) => {
+                    if (willReset) {
+                        @this.call('resetPassword', id);
+                    }
+                });
+            }
+
+            Livewire.on('userPasswordReset', (event) => {
+                const data = event[0];
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success btn-pill'
+                        }
+                    }
+                });
+            });
+
             // Generic alert event
             Livewire.on('showAlert', (event) => {
                 const data = event[0];
@@ -507,6 +549,43 @@
                 }).then(() => {
                     // Reinitialize DataTable after deletion
                     setTimeout(initDataTable, 100);
+                });
+            });
+
+            window.confirmReset = function(id) {
+                swal({
+                    title: 'Reset Password?',
+                    text: "Password will be reset to the user's NUP.",
+                    icon: 'warning',
+                    buttons: {
+                        cancel: {
+                            visible: true,
+                            text: 'Cancel',
+                            className: 'btn btn-secondary btn-pill'
+                        },
+                        confirm: {
+                            text: 'Yes, reset it!',
+                            className: 'btn btn-warning btn-pill'
+                        }
+                    }
+                }).then((willReset) => {
+                    if (willReset) {
+                        @this.call('resetPassword', id);
+                    }
+                });
+            }
+
+            Livewire.on('userPasswordReset', (event) => {
+                const data = event[0];
+                swal({
+                    title: data.title,
+                    text: data.message,
+                    icon: data.icon,
+                    buttons: {
+                        confirm: {
+                            className: 'btn btn-success btn-pill'
+                        }
+                    }
                 });
             });
 

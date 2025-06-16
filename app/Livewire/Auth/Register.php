@@ -219,6 +219,28 @@ class Register extends Component
         }
     }
 
+    public function resetPassword($userId)
+    {
+        try {
+            $user = User::findOrFail($userId);
+            $user->password = bcrypt($user->nup);
+            $user->is_default_password = true;
+            $user->save();
+
+            $this->dispatch('userPasswordReset', [
+                'title' => 'Password Reset',
+                'message' => "Password for {$user->name} has been reset to their NUP.",
+                'icon' => 'success'
+            ]);
+        } catch (\Exception $e) {
+            $this->dispatch('showAlert', [
+                'title' => 'Error!',
+                'message' => 'Failed to reset password. ' . $e->getMessage(),
+                'icon' => 'error'
+            ]);
+        }
+    }
+
     public function closeRegisterModal()
     {
         // dd('Closing modal');
