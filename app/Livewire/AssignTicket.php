@@ -54,6 +54,9 @@ class AssignTicket extends Component
     {
         $this->tickets = Ticket::with(['reagent', 'requester', 'assignedTo'])
             // ->whereIn('status', ['pending', 'assigned'])
+            ->when(auth()->user() && auth()->user()->role_id == 4, function ($query) {
+                $query->where('assigned_to', auth()->id());
+            })
             ->orderBy('created_at', 'desc')
             ->get();
     }
@@ -281,7 +284,7 @@ class AssignTicket extends Component
         return view('livewire.assign-ticket', [
             'tickets' => $this->tickets,
             'reagents' => Reagent::where('type', 'Ticket')->pluck('name', 'id'),
-            'users' => User::where('dept_id', '1')->pluck('name', 'id'),
+            'users' => User::where('dept_id', '1')->where('role_id', 4)->pluck('name', 'id'),
         ]);
     }
 }
