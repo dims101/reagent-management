@@ -21,17 +21,19 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', fn() => redirect()->route('login'));
 
-Route::get('/dashboard', Dashboard::class)->name('dashboard');
-Route::get('/stock', ShowStock::class)->name('self-stock');
-Route::get('/stock/others', ShowOtherStock::class)->name('other-stock');
-Route::get('/stock/create', CreateStock::class)->name('create-stock');
-Route::get('/register', Register::class)->name('register');
-Route::get('/approval', ApprovalList::class)->name('approval-list');
-Route::get('/reject', Reject::class)->name('reject');
-Route::get('/history', History::class)->name('history');
-Route::get('/ticket/create', CreateTicket::class)->name('create-ticket');
-Route::get('/ticket/assign', AssignTicket::class)->name('assign-ticket');
-Route::get('/ticket', ShowTicket::class)->name('show-ticket');
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', Dashboard::class)->name('dashboard');
+    Route::get('/stock', ShowStock::class)->name('self-stock');
+    Route::get('/stock/others', ShowOtherStock::class)->name('other-stock');
+    Route::get('/stock/create', CreateStock::class)->name('create-stock');
+    Route::get('/register', Register::class)->name('register');
+    Route::get('/approval', ApprovalList::class)->name('approval-list');
+    Route::get('/reject', Reject::class)->name('reject');
+    Route::get('/history', History::class)->name('history');
+    Route::get('/ticket/create', CreateTicket::class)->name('create-ticket');
+    Route::get('/ticket/assign', AssignTicket::class)->name('assign-ticket');
+    Route::get('/ticket', ShowTicket::class)->name('show-ticket');
+});
 // Route::get('/login',[AuthController::class,'showLogin'])->name('login');
 
 Auth::routes($options = [
@@ -50,7 +52,7 @@ Route::middleware('guest')->group(function () {
 Route::get('/testmail', function () {
     $department = \App\Models\Department::find(1);
     $name = $department->name;
-    Mail::to('uztadz.jablinx@gmail.com')->send(new \App\Mail\SendApprovalmanager($name, 'https://www.google .com/'));
+    Mail::to('uztadz.jablinx@gmail.com')->send(new \App\Mail\SendApprovalmanager($name, 'https://www.google.com/'));
     return [$department->name, $department->pic_id, $department->manager_id];
 });
 

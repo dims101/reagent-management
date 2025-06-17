@@ -72,7 +72,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="5" class="text-center">No approval requests found.</td>
+                                        <td colspan="6" class="text-center">No approval requests found.</td>
                                     </tr>
                                 @endforelse
                             </tbody>
