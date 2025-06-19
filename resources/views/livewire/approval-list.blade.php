@@ -542,10 +542,5 @@
         //         "responsive": true
         //     });
         // });
-        document.addEventListener('DOMContentLoaded', function() {
-            initDataTable();
-        }, {
-            once: true
-        });
     </script>
 @endpush
