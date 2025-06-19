@@ -37,6 +37,11 @@
                                                     title="Close">
                                                     <i class="fas fa-check text-success"></i>
                                                 </a>
+                                            @elseif (auth()->user()->id === $ticket->assigned_to)
+                                                <a href="#" wire:click.prevent="closeTicket({{ $ticket->id }})"
+                                                    title="Close">
+                                                    <i class="fas fa-check text-success"></i>
+                                                </a>
                                             @endif
                                         @endif
                                     @endif
