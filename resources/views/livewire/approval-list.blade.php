@@ -323,7 +323,7 @@
                 ], // Order by request date descending
             });
         };
-        document.addEventListener('livewire:init', function() {
+        document.addEventListener('livewire:initialized', function() {
             // Listen for confirmation events
             Livewire.on('modal-opened', () => {
                 document.body.classList.add('modal-open');

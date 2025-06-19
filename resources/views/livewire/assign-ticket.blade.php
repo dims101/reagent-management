@@ -376,15 +376,13 @@
             once: true
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('livewire:initialized', function() {
             setTimeout(initAssignTicketTable, 100);
+        }, {
+            once: true
+        });
 
-            // Handle SweetAlert events - Using Livewire 3 syntax
-
-
-            // Handle confirmation dialog - Using Livewire 3 syntax
-
-
+        document.addEventListener('DOMContentLoaded', function() {
             // Update file input label when file is selected
             document.addEventListener('change', function(e) {
                 if (e.target && e.target.classList.contains('custom-file-input')) {
