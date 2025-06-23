@@ -24,6 +24,8 @@ class ReagentSeeder extends Seeder
         while (($row = fgetcsv($handle, 1000, ';')) !== false) {
             $reagent = array_combine($header, $row);
 
+            $reagent = array_map(fn($v) => mb_convert_encoding($v, 'UTF-8', 'auto'), $reagent);
+
             DB::table('reagents')->insert([
                 'name'       => $reagent['name'] ?? null,
                 'vendor'     => $reagent['vendor'] ?? null,
