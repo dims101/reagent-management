@@ -29,6 +29,7 @@ class CreateStock extends Component
     public $dept_owner_id;
     public $minimum_qty;
     public $location;
+    public $input_by;
 
     // Server-side search properties
     public $search = '';
@@ -37,12 +38,15 @@ class CreateStock extends Component
 
     // Add property for owner name display
     public $owner_name;
+    public $input_name;
 
     public function mount()
     {
         $this->input_date = now()->format('Y-m-d');
         $this->dept_owner_id = Auth::user()->dept_id ?? null;
+        $this->input_by = Auth::user()->id ?? null;
         $this->owner_name = Auth::user()->department ? Auth::user()->department->name : 'Unknown Department';
+        $this->input_name = Auth::user()->name ?? 'Unknown User';
 
         // Initialize with empty reagents array
         $this->reagents = [];
@@ -116,6 +120,7 @@ class CreateStock extends Component
             'lead_time'      => 'nullable|integer|min:0',
             'dept_owner_id'  => 'required|integer',
             'minimum_qty'    => 'nullable|numeric|min:0',
+            'input_by'      => 'nullable|integer|exists:users,id',
         ];
     }
 
@@ -217,6 +222,7 @@ class CreateStock extends Component
             $stock->quantity_uom = $this->quantity_uom;
             $stock->expired_date = $this->expired_date;
             $stock->dept_owner_id = $this->dept_owner_id;
+            $stock->input_by = $this->input_by;
             $stock->created_at = $this->input_date;
             $stock->save();
 
@@ -241,6 +247,7 @@ class CreateStock extends Component
             // Reset dates and owner
             $this->input_date = now()->format('Y-m-d');
             $this->dept_owner_id = Auth::user()->dept_id;
+            $this->input_by = Auth::user()->id;
             $this->reagents = [];
             $this->showDropdown = false;
 

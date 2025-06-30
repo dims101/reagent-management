@@ -208,6 +208,26 @@ class ShowStock extends Component
         $this->dispatch('approvalUpdated')->to(Sidebar::class);
     }
 
+    #[\Livewire\Attributes\On('deleteStock')]
+    public function deleteStock($id)
+    {
+        $stock = Stock::find($id);
+        if ($stock) {
+            $stock->delete();
+            $this->dispatch('swal', [
+                'icon' => 'success',
+                'title' => 'Deleted!',
+                'text' => 'Stock deleted successfully.'
+            ]);
+        } else {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Stock not found.'
+            ]);
+        }
+    }
+
     public function mount()
     {
         $this->requested_by = Auth::user()->id;

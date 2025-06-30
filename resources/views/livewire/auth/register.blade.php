@@ -299,13 +299,6 @@
             $('.tooltip').remove();
         }
 
-        // Initialize on document ready
-        document.addEventListener('DOMContentLoaded', function() {
-            initDataTable();
-        }, {
-            once: true
-        });
-
         // Livewire event listeners
         document.addEventListener('livewire:initialized', () => {
             // User created event
@@ -646,12 +639,12 @@
         });
 
         // Handle any DOM updates from Livewire
-        document.addEventListener('livewire:load', function() {
-            cleanupTooltips();
-            setTimeout(initDataTable, 300);
-        }, {
-            once: true
-        });
+        // document.addEventListener('livewire:load', function() {
+        //     cleanupTooltips();
+        //     setTimeout(initDataTable, 300);
+        // }, {
+        //     once: true
+        // });
 
         // Clean up tooltips when the page is about to unload
         window.addEventListener('beforeunload', function() {

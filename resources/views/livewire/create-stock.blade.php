@@ -214,11 +214,23 @@
                         <div class="col-md-6">
                             <!-- Owner (Autofill) -->
                             <div class="form-group">
-                                <label for="owner_display" class="form-label">
-                                    Owner <span class="text-danger">*</span>
-                                </label>
-                                <input type="text" class="form-control bg-light" id="owner_display"
-                                    value="{{ $owner_name }}" readonly required>
+
+                                <div class="row">
+                                    <div class="col">
+                                        <label for="input_by_display" class="form-label">
+                                            Input By <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control bg-light" id="input_by_display"
+                                            value="{{ $input_name }}" readonly required>
+                                    </div>
+                                    <div class="col">
+                                        <label for="owner_display" class="form-label">
+                                            Owner <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" class="form-control bg-light" id="owner_display"
+                                            value="{{ $owner_name }}" readonly required>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>

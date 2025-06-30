@@ -25,6 +25,7 @@ class Stock extends Model
         'quantity_uom',
         'expired_date',
         'dept_owner_id',
+        'input_by',
     ];
 
     protected $casts = [
@@ -35,6 +36,7 @@ class Stock extends Model
         'price' => 'decimal:2',
         'lead_time' => 'integer',
         'dept_owner_id' => 'integer',
+        'input_by' => 'integer',
     ];
 
     protected $dates = [
@@ -48,5 +50,10 @@ class Stock extends Model
     public function department()
     {
         return $this->belongsTo(Department::class, 'dept_owner_id');
+    }
+
+    public function inputBy()
+    {
+        return $this->belongsTo(User::class, 'input_by');
     }
 }

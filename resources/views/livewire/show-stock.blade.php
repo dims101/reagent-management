@@ -2,8 +2,8 @@
 <div class="row mt--2">
     <div class="col-md-12">
         <div class="card full-height">
-            <div class="card-body" wire:ignore>
-                <table id="stock-datatable" class="display table table-striped table-hover datatable" wire:ignore>
+            <div class="card-body table-responsive">
+                <table id="stock-datatable" class="display table table-striped table-hover datatable" wire:ignore.self>
                     <thead class="thead-light">
                         <tr>
                             <th>Action</th>
@@ -16,17 +16,24 @@
                             <th>Owner</th>
                             <th>Location</th>
                             <th>Site</th>
+                            <th>Input By</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($stocks as $stock)
                             <tr>
                                 <td>
-                                    <div class="form-button-action">
-                                        <button type="button" class="btn btn-link btn-primary btn-lg"
+                                    <div class="form-button-action d-flex gap-2">
+                                        <button type="button" class="btn btn-link btn-primary p-2"
                                             wire:click="openRequestModal({{ $stock->id }})" title="Request Stock">
                                             <i class="fa fa-edit"></i>
                                         </button>
+                                        @if ($stock->input_by === auth()->id())
+                                            <button type="button" class="btn btn-link btn-danger p-0"
+                                                onclick="confirmDelete({{ $stock->id }})" title="Delete Stock">
+                                                <i class="fa fa-trash"></i>
+                                            </button>
+                                        @endif
                                     </div>
                                 </td>
                                 <td>{{ $stock->reagent_name }}</td>
@@ -39,6 +46,7 @@
                                 <td>{{ $stock->department ? $stock->department->name : '-' }}</td>
                                 <td>{{ $stock->location }}</td>
                                 <td>{{ $stock->site }}</td>
+                                <td>{{ $stock->input_by ? $stock->inputBy->name : '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -194,23 +202,46 @@
                     }
                 },
                 initComplete: function() {
+                    var api = this.api();
                     var reagentFilter = $(
-                        '<select class="form-control"><option value="">Reagent Name</option></select>');
-                    var reagentNames = [];
-                    this.api().column(1).data().unique().sort().each(function(value) {
-                        if (value && reagentNames.indexOf(value) === -1) {
-                            reagentNames.push(value);
-                            reagentFilter.append('<option value="' + value + '">' + value +
-                                '</option>');
+                        '<select class="form-control"><option value="">All Reagents</option></select>');
+
+                    // Get unique reagent names from column 1 (Reagent Name)
+                    var uniqueReagents = [];
+                    api.column(1).data().each(function(value, index) {
+                        var cleanValue = value ? value.toString().trim() : '';
+                        if (cleanValue && uniqueReagents.indexOf(cleanValue) === -1) {
+                            uniqueReagents.push(cleanValue);
                         }
                     });
+
+                    // Sort reagent names alphabetically
+                    uniqueReagents.sort();
+
+                    // Add options to select
+                    uniqueReagents.forEach(function(reagent) {
+                        reagentFilter.append('<option value="' + reagent + '">' + reagent +
+                            '</option>');
+                    });
+
+                    // Place the filter in the designated div
                     $('div.reagent-filter').html(reagentFilter);
+
+                    // Handle filter change
                     reagentFilter.on('change', function() {
-                        var val = $(this).val();
-                        stockDatatable.column(1).search(val ? '^' + val + '$' : '', true, false).draw();
+                        var selectedValue = $(this).val();
+                        if (selectedValue === '') {
+                            // Show all rows
+                            api.column(1).search('').draw();
+                        } else {
+                            // Escape special regex characters and filter by exact match
+                            var escapedValue = $.fn.dataTable.util.escapeRegex(selectedValue);
+                            api.column(1).search('^' + escapedValue + '$', true, false).draw();
+                        }
                     });
                 }
             });
+
             setTimeout(function() {
                 $('[data-toggle="tooltip"]').tooltip({
                     trigger: 'hover',
@@ -222,6 +253,7 @@
             }, 100);
         }
 
+
         function cleanupTooltips() {
             $('[data-toggle="tooltip"]').each(function() {
                 $(this).tooltip('dispose');
@@ -229,11 +261,11 @@
             $('.tooltip').remove();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initDataTable();
-        }, {
-            once: true
-        });
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     initDataTable();
+        // }, {
+        //     once: true
+        // });
 
         document.addEventListener('livewire:initialized', function() {
             // alert('Livewire initialized');
@@ -266,12 +298,12 @@
 
             Livewire.on('swal', (data) => {
                 swal({
-                    title: data.title,
-                    text: data.text,
-                    type: data.icon || data.type || 'info',
+                    title: data[0].title,
+                    text: data[0].text,
+                    icon: data[0].icon,
                     buttons: {
                         confirm: {
-                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
+                            className: data[0].icon === 'error' ? 'btn btn-danger btn-pill' :
                                 'btn btn-success btn-pill'
                         }
                     }
@@ -307,15 +339,18 @@
             });
             Livewire.on('swal', (data) => {
                 swal({
-                    title: data.title,
-                    text: data.text,
-                    type: data.icon || data.type || 'info',
+                    title: data[0].title,
+                    text: data[0].text,
+                    icon: data[0].icon,
                     buttons: {
                         confirm: {
-                            className: data.icon === 'error' ? 'btn btn-danger btn-pill' :
+                            className: data[0].icon === 'error' ? 'btn btn-danger btn-pill' :
                                 'btn btn-success btn-pill'
                         }
                     }
+                }).then(() => {
+                    cleanupTooltips();
+                    initDataTable();
                 });
             });
             Livewire.on('swal-confirm', (data) => {
@@ -360,6 +395,32 @@
         }, {
             once: true
         });
+
+        // Confirm delete function
+        window.confirmDelete = function(id) {
+            swal({
+                title: 'Delete Stock?',
+                text: "Are you sure you want to delete this stock?",
+                icon: 'warning',
+                buttons: {
+                    cancel: {
+                        text: 'Cancel',
+                        visible: true,
+                        className: 'btn btn-secondary btn-pill'
+                    },
+                    confirm: {
+                        text: 'Yes, delete it!',
+                        className: 'btn btn-danger btn-pill'
+                    }
+                }
+            }).then((willDelete) => {
+                if (willDelete) {
+                    Livewire.dispatch('deleteStock', {
+                        id: id
+                    });
+                }
+            });
+        }
 
         Livewire.hook('message.processed', (message, component) => {
             setTimeout(() => {

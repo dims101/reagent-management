@@ -2,8 +2,8 @@
 <div class="row mt--2">
     <div class="col-md-12">
         <div class="card full-height">
-            <div class="card-body" wire:ignore>
-                <table id="stock-datatable" class="display table table-striped table-hover datatable" wire:ignore>
+            <div class="card-body table-responsive">
+                <table id="stock-datatable" class="display table table-striped table-hover datatable" wire:ignore.self>
                     <thead class="thead-light">
                         <tr>
                             <th>Action</th>
@@ -16,6 +16,7 @@
                             <th>Owner</th>
                             <th>Location</th>
                             <th>Site</th>
+                            <th>Input By</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -23,7 +24,7 @@
                             <tr>
                                 <td>
                                     <div class="form-button-action">
-                                        <button type="button" class="btn btn-link btn-primary btn-lg"
+                                        <button type="button" class="btn btn-link btn-primary"
                                             wire:click="openRequestModal({{ $stock->id }})" title="Request Stock">
                                             <i class="fa fa-edit"></i>
                                         </button>
@@ -39,6 +40,7 @@
                                 <td>{{ $stock->department ? $stock->department->name : '-' }}</td>
                                 <td>{{ $stock->location }}</td>
                                 <td>{{ $stock->site }}</td>
+                                <td>{{ $stock->input_by ? $stock->inputBy->name : '-' }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -172,9 +174,6 @@
             stockDatatable = $('#stock-datatable').DataTable({
                 responsive: true,
                 pageLength: 10,
-                order: [
-                    [6, 'asc']
-                ],
                 columnDefs: [{
                         orderable: false,
                         targets: 0
@@ -197,23 +196,46 @@
                     }
                 },
                 initComplete: function() {
+                    var api = this.api();
                     var reagentFilter = $(
-                        '<select class="form-control"><option value="">Reagent Name</option></select>');
-                    var reagentNames = [];
-                    this.api().column(1).data().unique().sort().each(function(value) {
-                        if (value && reagentNames.indexOf(value) === -1) {
-                            reagentNames.push(value);
-                            reagentFilter.append('<option value="' + value + '">' + value +
-                                '</option>');
+                        '<select class="form-control"><option value="">All Reagents</option></select>');
+
+                    // Get unique reagent names from column 1 (Reagent Name)
+                    var uniqueReagents = [];
+                    api.column(1).data().each(function(value, index) {
+                        var cleanValue = value ? value.toString().trim() : '';
+                        if (cleanValue && uniqueReagents.indexOf(cleanValue) === -1) {
+                            uniqueReagents.push(cleanValue);
                         }
                     });
+
+                    // Sort reagent names alphabetically
+                    uniqueReagents.sort();
+
+                    // Add options to select
+                    uniqueReagents.forEach(function(reagent) {
+                        reagentFilter.append('<option value="' + reagent + '">' + reagent +
+                            '</option>');
+                    });
+
+                    // Place the filter in the designated div
                     $('div.reagent-filter').html(reagentFilter);
+
+                    // Handle filter change
                     reagentFilter.on('change', function() {
-                        var val = $(this).val();
-                        stockDatatable.column(1).search(val ? '^' + val + '$' : '', true, false).draw();
+                        var selectedValue = $(this).val();
+                        if (selectedValue === '') {
+                            // Show all rows
+                            api.column(1).search('').draw();
+                        } else {
+                            // Escape special regex characters and filter by exact match
+                            var escapedValue = $.fn.dataTable.util.escapeRegex(selectedValue);
+                            api.column(1).search('^' + escapedValue + '$', true, false).draw();
+                        }
                     });
                 }
             });
+
             setTimeout(function() {
                 $('[data-toggle="tooltip"]').tooltip({
                     trigger: 'hover',
@@ -232,11 +254,11 @@
             $('.tooltip').remove();
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            initDataTable();
-        }, {
-            once: true
-        });
+        // document.addEventListener('DOMContentLoaded', function() {
+        //     initDataTable();
+        // }, {
+        //     once: true
+        // });
 
         document.addEventListener('livewire:initialized', function() {
             // alert('Livewire initialized');
