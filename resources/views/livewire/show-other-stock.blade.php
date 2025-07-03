@@ -76,11 +76,76 @@
                                             required>
                                     </div>
 
+                                    {{-- Purpose Field with Search --}}
                                     <div class="form-group">
                                         <label for="purpose" class="form-label">Purpose of Requesting <span
                                                 class="text-danger">*</span></label>
-                                        <textarea class="form-control" id="purpose" wire:model="purpose" rows="3" placeholder="Enter purpose of request"
-                                            required></textarea>
+
+                                        @if (!$isNewPurpose)
+                                            <div class="position-relative">
+                                                <input type="text" class="form-control" id="purpose-search"
+                                                    wire:model.live.debounce.300ms="purposeSearch"
+                                                    wire:focus="showPurposeOptions" wire:blur="hidePurposeDropdown"
+                                                    placeholder="Search or select purpose..." autocomplete="off"
+                                                    required>
+
+                                                {{-- Purpose Dropdown --}}
+                                                @if ($showPurposeDropdown)
+                                                    <div class="position-absolute w-100 bg-white border border-top-0 shadow-sm"
+                                                        style="top: 100%; z-index: 1050; max-height: 200px; overflow-y: auto;">
+                                                        @if (count($purposeOptions) > 0)
+                                                            @foreach ($purposeOptions as $option)
+                                                                <div class="px-3 py-2 cursor-pointer hover-bg-light border-bottom"
+                                                                    wire:click="selectPurpose({{ $option['id'] }}, '{{ $option['name'] }}')"
+                                                                    style="cursor: pointer;">
+                                                                    {{ $option['name'] }}
+                                                                </div>
+                                                            @endforeach
+                                                        @endif
+
+                                                        {{-- Add New Purpose Option --}}
+                                                        @if (!empty($purposeSearch))
+                                                            <div class="px-3 py-2 cursor-pointer hover-bg-light border-bottom text-primary"
+                                                                wire:click="addNewPurpose" style="cursor: pointer;">
+                                                                <i class="fa fa-plus-circle"></i> Add new purpose:
+                                                                "{{ $purposeSearch }}"
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                @endif
+                                            </div>
+                                        @else
+                                            {{-- New Purpose Input --}}
+                                            <div class="card border-primary">
+                                                {{-- <div class="card-header bg-primary text-white py-2">
+                                                    <small><i class="fa fa-plus-circle"></i> New Purpose Name</small>
+                                                </div> --}}
+                                                <div class="card-body p-3">
+                                                    <div class="form-group mb-2">
+                                                        <label class="form-label small">New Purpose Name</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            wire:model="newPurposeName"
+                                                            placeholder="Enter new purpose name..." required>
+                                                        @error('newPurposeName')
+                                                            <small class="text-danger">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="button" class="btn btn-sm btn-success btn-pill"
+                                                            wire:click="saveNewPurpose">
+                                                            <i class="fa fa-plus-circle"></i> Add
+                                                        </button>
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-secondary mr-2 btn-pill"
+                                                            wire:click="cancelNewPurpose">
+                                                            Cancel
+                                                        </button>
+
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        @endif
+
                                         @error('purpose')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
@@ -145,7 +210,7 @@
                             <button type="button" class="btn btn-secondary btn-pill" wire:click="closeModal">
                                 <i class="fa fa-times"></i> Cancel
                             </button>
-                            <button type="submit" class="btn btn-primary btn-pill" wire:loading.attr="disabled">
+                            <button type="submit" class="btn btn-success btn-pill" wire:loading.attr="disabled">
                                 <span wire:loading.remove>
                                     <i class="fa fa-check"></i> Submit Request
                                 </span>
@@ -254,14 +319,7 @@
             $('.tooltip').remove();
         }
 
-        // document.addEventListener('DOMContentLoaded', function() {
-        //     initDataTable();
-        // }, {
-        //     once: true
-        // });
-
         document.addEventListener('livewire:initialized', function() {
-            // alert('Livewire initialized');
             Livewire.on('modal-opened', () => {
                 document.body.classList.add('modal-open');
             });
@@ -270,6 +328,12 @@
                 document.body.classList.remove('modal-open');
                 cleanupTooltips();
                 setTimeout(initDataTable, 100);
+            });
+
+            Livewire.on('hide-purpose-dropdown', () => {
+                setTimeout(() => {
+                    @this.set('showPurposeDropdown', false);
+                }, 200);
             });
 
             Livewire.on('request-submitted', () => {
@@ -307,13 +371,20 @@
         });
 
         document.addEventListener('livewire:navigated', function() {
-            // alert('Livewire navigated');
             cleanupTooltips();
             setTimeout(initDataTable, 100);
+
             Livewire.on('modal-closed', () => {
                 document.body.classList.remove('modal-open');
                 setTimeout(initDataTable, 100);
             });
+
+            Livewire.on('hide-purpose-dropdown', () => {
+                setTimeout(() => {
+                    @this.set('showPurposeDropdown', false);
+                }, 200);
+            });
+
             Livewire.on('request-submitted', () => {
                 setTimeout(() => {
                     swal({
@@ -330,6 +401,7 @@
                     initDataTable();
                 }, 400);
             });
+
             Livewire.on('swal', (data) => {
                 swal({
                     title: data.title,
@@ -347,11 +419,6 @@
             once: true
         });
 
-        // document.addEventListener('livewire:load', function() {
-        //     cleanupTooltips();
-        //     setTimeout(initDataTable, 300);
-        // });
-
         window.addEventListener('beforeunload', function() {
             cleanupTooltips();
         }, {
@@ -362,12 +429,27 @@
             setTimeout(() => {
                 cleanupTooltips();
                 initDataTable();
-                shouldInitDataTable = false;
             }, 100);
-
-
         }, {
             once: true
         });
     </script>
+
+    <style>
+        .hover-bg-light:hover {
+            background-color: #f8f9fa !important;
+        }
+
+        .cursor-pointer {
+            cursor: pointer;
+        }
+
+        .position-relative {
+            position: relative;
+        }
+
+        .position-absolute {
+            position: absolute;
+        }
+    </style>
 @endpush

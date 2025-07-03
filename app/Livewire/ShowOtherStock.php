@@ -7,6 +7,7 @@ use App\Models\Stock;
 use App\Models\Request;
 use Livewire\Component;
 use App\Models\Approval;
+use App\Models\Purpose;
 use App\Models\Department;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
@@ -28,6 +29,14 @@ class ShowOtherStock extends Component
     public $showModal = false;
     public $selectedStock;
 
+    // Purpose search properties
+    public $purposeSearch = '';
+    public $purposeOptions = [];
+    public $showPurposeDropdown = false;
+    public $selectedPurposeId = null;
+    public $isNewPurpose = false;
+    public $newPurposeName = '';
+
     protected $rules = [
         'request_no' => 'required|integer',
         'reagent_id' => 'required|integer|exists:stocks,id',
@@ -44,11 +53,117 @@ class ShowOtherStock extends Component
         'requested_by.required' => 'Requester is required.',
     ];
 
+    public function updatedPurposeSearch()
+    {
+        $this->searchPurposes();
+    }
+
+    public function searchPurposes()
+    {
+        if (empty($this->purposeSearch)) {
+            // Show initial 5 purposes when field is empty
+            $this->purposeOptions = Purpose::where('type', 'stock')
+                ->orderBy('name')
+                ->limit(5)
+                ->get()
+                ->toArray();
+        } else {
+            // Search purposes based on input
+            $this->purposeOptions = Purpose::where('type', 'stock')
+                ->where('name', 'ILIKE', '%' . $this->purposeSearch . '%')
+                ->orderBy('name')
+                ->limit(10)
+                ->get()
+                ->toArray();
+        }
+
+        $this->showPurposeDropdown = true;
+        $this->isNewPurpose = false;
+    }
+
+    public function selectPurpose($purposeId, $purposeName)
+    {
+        $this->selectedPurposeId = $purposeId;
+        $this->purpose = $purposeName;
+        $this->purposeSearch = $purposeName;
+        $this->showPurposeDropdown = false;
+        $this->isNewPurpose = false;
+    }
+
+    public function addNewPurpose()
+    {
+        $this->isNewPurpose = true;
+        $this->newPurposeName = $this->purposeSearch;
+        $this->showPurposeDropdown = false;
+    }
+
+    public function saveNewPurpose()
+    {
+        $this->validate([
+            'newPurposeName' => 'required|string|max:200|unique:purposes,name'
+        ], [
+            'newPurposeName.required' => 'Purpose name is required.',
+            'newPurposeName.unique' => 'This purpose already exists.'
+        ]);
+
+        try {
+            $newPurpose = Purpose::create([
+                'name' => $this->newPurposeName,
+                'type' => 'stock'
+            ]);
+
+            $this->selectedPurposeId = $newPurpose->id;
+            $this->purpose = $newPurpose->name;
+            $this->purposeSearch = $newPurpose->name;
+            $this->isNewPurpose = false;
+            $this->newPurposeName = '';
+
+            // $this->dispatch('swal', [
+            //     'icon' => 'success',
+            //     'title' => 'Success!',
+            //     'text' => 'New purpose added successfully.'
+            // ]);
+        } catch (\Exception $e) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Failed to add new purpose: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function cancelNewPurpose()
+    {
+        $this->isNewPurpose = false;
+        $this->newPurposeName = '';
+        $this->purposeSearch = '';
+        $this->showPurposeDropdown = false;
+    }
+
+    public function hidePurposeDropdown()
+    {
+        // Add a small delay to allow click events to register
+        $this->dispatch('hide-purpose-dropdown');
+    }
+
+    public function showPurposeOptions()
+    {
+        $this->searchPurposes();
+    }
+
     public function openRequestModal($stockId)
     {
         $this->selectedStock = Stock::find($stockId);
         $this->reagent_id = $stockId;
         $this->showModal = true;
+
+        // Load initial purposes
+        $this->purposeOptions = Purpose::where('type', 'stock')
+            ->orderBy('name')
+            ->limit(5)
+            ->get()
+            ->toArray();
+
         $this->dispatch('modal-opened');
     }
 
@@ -56,13 +171,12 @@ class ShowOtherStock extends Component
     {
         $this->showModal = false;
         $this->selectedStock = null;
-        $this->reset(['reagent_id', 'request_qty', 'purpose']);
+        $this->reset(['reagent_id', 'request_qty', 'purpose', 'purposeSearch', 'purposeOptions', 'showPurposeDropdown', 'selectedPurposeId', 'isNewPurpose', 'newPurposeName']);
         $this->dispatch('modal-closed');
     }
 
     public function submitRequest()
     {
-
         try {
             $this->validate();
 
@@ -86,6 +200,7 @@ class ShowOtherStock extends Component
                 ]);
                 return;
             }
+
             try {
                 // Get dept_id by joining requests and stocks where reagent_id = stock.id
                 $deptId = Stock::where('id', $this->reagent_id)->value('dept_owner_id');
@@ -97,12 +212,6 @@ class ShowOtherStock extends Component
                     'assigned_pic_id' => $pic_id,
                     'assigned_manager_id' => $manager_id,
                 ]);
-
-                // $this->dispatch('swal', [
-                //     'icon' => 'success',
-                //     'title' => 'Request Submitted!',
-                //     'text' => 'Reagent request submitted successfully.'
-                // ]);
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
@@ -122,6 +231,7 @@ class ShowOtherStock extends Component
                     'approval_id'  => $approval->id,
                     'status'       => 'pending',
                 ]);
+
                 // Mail::to mail here
                 $deptOwnerId = Stock::find($this->reagent_id)->dept_owner_id;
                 $mailPicId = Department::find($deptOwnerId)->pic_id;
@@ -134,10 +244,11 @@ class ShowOtherStock extends Component
                     'title' => 'Error!',
                     'text' => 'Failed to submit request: ' . $e->getMessage()
                 ]);
+                return;
             }
 
             // Reset fields and close modal
-            $this->reset(['reagent_id', 'request_qty', 'purpose']);
+            $this->reset(['reagent_id', 'request_qty', 'purpose', 'purposeSearch', 'purposeOptions', 'showPurposeDropdown', 'selectedPurposeId', 'isNewPurpose', 'newPurposeName']);
             $this->closeModal();
 
             // Generate new request number for next request

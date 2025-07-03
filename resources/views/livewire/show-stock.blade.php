@@ -85,8 +85,65 @@
                                     <div class="form-group">
                                         <label for="purpose" class="form-label">Purpose of Requesting <span
                                                 class="text-danger">*</span></label>
-                                        <textarea class="form-control" id="purpose" wire:model="purpose" rows="3" placeholder="Enter purpose of request"
-                                            required></textarea>
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control" id="purpose"
+                                                wire:model.live.debounce.300ms="purposeSearch"
+                                                wire:focus="focusPurposeField" wire:blur="hidePurposeDropdown"
+                                                placeholder="Search or select purpose" autocomplete="off" required>
+
+                                            {{-- Purpose Dropdown --}}
+                                            @if ($showPurposeDropdown && !$showAddNewPurpose)
+                                                <div class="position-absolute w-100 border rounded shadow-sm bg-white"
+                                                    style="z-index: 1000; max-height: 200px; overflow-y: auto; top: 100%;">
+                                                    @if (!empty($purposes))
+                                                        @foreach ($purposes as $purposeItem)
+                                                            <div class="dropdown-item px-3 py-2 cursor-pointer hover:bg-gray-100"
+                                                                wire:click="selectPurpose({{ $purposeItem['id'] }}, '{{ $purposeItem['name'] }}')"
+                                                                style="cursor: pointer;">
+                                                                {{ $purposeItem['name'] }}
+                                                            </div>
+                                                        @endforeach
+                                                    @endif
+
+                                                    {{-- Add New Purpose Option --}}
+                                                    @if ($purposeSearch && !collect($purposes)->contains('name', $purposeSearch))
+                                                        <div class="dropdown-item px-3 py-2 cursor-pointer text-primary border-top"
+                                                            wire:click="showAddNewPurposeForm" style="cursor: pointer;">
+                                                            <i class="fa fa-plus-circle mr-2"></i>Add new purpose :
+                                                            "{{ $purposeSearch }}"
+
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+
+                                            {{-- Add New Purpose Form --}}
+                                            @if ($showAddNewPurpose)
+                                                <div class="position-absolute w-100 border rounded shadow-sm bg-white p-3"
+                                                    style="z-index: 1000; top: 100%;">
+                                                    <div class="form-group mb-2">
+                                                        <label class="form-label small">New Purpose Name</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            wire:model="newPurposeName"
+                                                            placeholder="Enter new purpose name">
+                                                        @error('newPurposeName')
+                                                            <small class="text-danger">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="button"
+                                                            class="btn btn-success btn-sm btn-pill mr-2"
+                                                            wire:click="addNewPurpose">
+                                                            <i class="fa fa-plus-circle"></i> Add
+                                                        </button>
+                                                        <button type="button" class="btn btn-secondary btn-sm btn-pill"
+                                                            wire:click="cancelAddNewPurpose">
+                                                            <i class="fa fa-times"></i> Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
                                         @error('purpose')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror

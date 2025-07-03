@@ -84,7 +84,9 @@
                         <div class="input-group-append">
                             <button type="button" class="btn btn-success btn-sm btn-pill" wire:click="addNewCustomer"
                                 wire:loading.attr="disabled">
-                                <span wire:loading.remove wire:target="addNewCustomer">Add</span>
+                                <span wire:loading.remove wire:target="addNewCustomer">
+                                    <i class="fas fa-plus-circle mr-1"></i> Add
+                                </span>
                                 <span wire:loading wire:target="addNewCustomer">
                                     <span class="spinner-border spinner-border-sm" role="status"></span>
                                 </span>
@@ -101,9 +103,8 @@
                     <div class="position-relative">
                         <input type="text" wire:model.live.debounce.300ms="customer_search"
                             class="form-control @error('customer_id') is-invalid @enderror"
-                            placeholder="Search customer or type new name..."
-                            wire:focus="$set('show_customer_dropdown', true)" wire:blur="hideCustomerDropdown"
-                            autocomplete="off">
+                            placeholder="Search customer or type new name..." wire:focus="focusCustomer"
+                            wire:blur="hideCustomerDropdown" autocomplete="off">
 
                         <!-- Dropdown for search results -->
                         @if ($show_customer_dropdown && (count($customers) > 0 || $customer_search))
@@ -115,7 +116,7 @@
                                             class="dropdown-item d-flex justify-content-between align-items-center"
                                             wire:click="selectCustomer({{ $customer->id }}, '{{ $customer->name }}')">
                                             <span>{{ $customer->name }}</span>
-                                            <small class="text-muted">Existing</small>
+                                            {{-- <small class="text-muted">Existing</small> --}}
                                         </button>
                                     @endforeach
                                     <div class="dropdown-divider"></div>
@@ -125,8 +126,9 @@
                                     <button type="button"
                                         class="dropdown-item d-flex justify-content-between align-items-center text-primary"
                                         wire:click="showAddNewCustomer">
-                                        <span>Add "{{ $customer_search }}" as new customer</span>
-                                        <small class="text-primary">+ New</small>
+                                        <span><i class="fas fa-plus-circle mr-1"></i> Add "{{ $customer_search }}" as
+                                            new customer</span>
+                                        {{-- <small class="text-primary">+ New</small> --}}
                                     </button>
                                 @endif
                             </div>
@@ -138,7 +140,7 @@
                 @endif
 
                 @if ($selected_customer_name && !$is_adding_new_customer)
-                    <small class="text-success mt-1">Selected: {{ $selected_customer_name }}</small>
+                    <small class="text-primary mt-1">Selected: {{ $selected_customer_name }}</small>
                 @endif
             </div>
 
@@ -155,7 +157,9 @@
                         <div class="input-group-append">
                             <button type="button" class="btn btn-success btn-sm btn-pill" wire:click="addNewPurpose"
                                 wire:loading.attr="disabled">
-                                <span wire:loading.remove wire:target="addNewPurpose">Add</span>
+                                <span wire:loading.remove wire:target="addNewPurpose">
+                                    <i class="fas fa-plus-circle mr-1"></i> Add
+                                </span>
                                 <span wire:loading wire:target="addNewPurpose">
                                     <span class="spinner-border spinner-border-sm" role="status"></span>
                                 </span>
@@ -172,9 +176,8 @@
                     <div class="position-relative">
                         <input type="text" wire:model.live.debounce.300ms="purpose_search"
                             class="form-control @error('purpose_id') is-invalid @enderror"
-                            placeholder="Search purpose or type new..."
-                            wire:focus="$set('show_purpose_dropdown', true)" wire:blur="hideCustomerDropdown"
-                            autocomplete="off">
+                            placeholder="Search purpose or type new..." wire:focus="focusPurpose"
+                            wire:blur="hidePurposeDropdown" autocomplete="off">
 
                         <!-- Dropdown for search results -->
                         @if ($show_purpose_dropdown && (count($purposes) > 0 || $purpose_search))
@@ -196,8 +199,9 @@
                                     <button type="button"
                                         class="dropdown-item d-flex justify-content-between align-items-center text-primary"
                                         wire:click="showAddNewPurpose">
-                                        <span>Add "{{ $purpose_search }}" as new purpose</span>
-                                        <small class="text-primary">+ New</small>
+                                        <span><i class="fas fa-plus-circle mr-1"></i> Add new purpose :
+                                            "{{ $purpose_search }}"</span>
+                                        {{-- <small class="text-primary">+ New</small> --}}
                                     </button>
                                 @endif
                             </div>
@@ -295,10 +299,17 @@
                 });
             });
 
-            // Handle delayed dropdown hiding
+            // Handle delayed dropdown hiding for customer
             Livewire.on('hide-dropdown-delayed', function() {
                 setTimeout(() => {
                     Livewire.dispatch('$set', ['show_customer_dropdown', false]);
+                }, 200);
+            });
+
+            // Handle delayed dropdown hiding for purpose
+            Livewire.on('hide-purpose-dropdown-delayed', function() {
+                setTimeout(() => {
+                    Livewire.dispatch('$set', ['show_purpose_dropdown', false]);
                 }, 200);
             });
         }, {
@@ -309,6 +320,7 @@
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.position-relative')) {
                 Livewire.dispatch('$set', ['show_customer_dropdown', false]);
+                Livewire.dispatch('$set', ['show_purpose_dropdown', false]);
             }
         });
     </script>

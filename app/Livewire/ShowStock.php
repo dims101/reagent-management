@@ -5,6 +5,7 @@ namespace App\Livewire;
 use App\Models\User;
 use App\Models\Stock;
 use App\Models\Request;
+use App\Models\Purpose;
 use Livewire\Component;
 use App\Models\Approval;
 use App\Models\Department;
@@ -28,12 +29,21 @@ class ShowStock extends Component
     public $showModal = false;
     public $selectedStock;
 
+    // Purpose search properties
+    public $purposeSearch = '';
+    public $selectedPurpose = null;
+    public $purposes = [];
+    public $showPurposeDropdown = false;
+    public $showAddNewPurpose = false;
+    public $newPurposeName = '';
+
     protected $rules = [
         'request_no' => 'required|integer',
         'reagent_id' => 'required|integer|exists:stocks,id',
         'request_qty' => 'required|numeric|min:0.01',
         'purpose' => 'required|string|max:200',
         'requested_by' => 'required|integer|exists:users,id',
+        'newPurposeName' => 'nullable|string|max:100|unique:purposes,name',
     ];
 
     protected $messages = [
@@ -42,6 +52,7 @@ class ShowStock extends Component
         'request_qty.required' => 'Request quantity is required.',
         'purpose.required' => 'Purpose is required.',
         'requested_by.required' => 'Requester is required.',
+        'newPurposeName.unique' => 'This purpose already exists.',
     ];
 
     public function openRequestModal($stockId)
@@ -49,6 +60,7 @@ class ShowStock extends Component
         $this->selectedStock = Stock::find($stockId);
         $this->reagent_id = $stockId;
         $this->showModal = true;
+        $this->loadInitialPurposes();
         $this->dispatch('modal-opened');
     }
 
@@ -56,8 +68,117 @@ class ShowStock extends Component
     {
         $this->showModal = false;
         $this->selectedStock = null;
+        $this->resetPurposeFields();
         $this->reset(['reagent_id', 'request_qty', 'purpose']);
         $this->dispatch('modal-closed');
+    }
+
+    public function resetPurposeFields()
+    {
+        $this->purposeSearch = '';
+        $this->selectedPurpose = null;
+        $this->purposes = [];
+        $this->showPurposeDropdown = false;
+        $this->showAddNewPurpose = false;
+        $this->newPurposeName = '';
+    }
+
+    public function loadInitialPurposes()
+    {
+        $this->purposes = Purpose::where('type', 'stock')
+            ->orderBy('name')
+            ->limit(5)
+            ->get()
+            ->toArray();
+    }
+
+    public function updatedPurposeSearch()
+    {
+        if (strlen($this->purposeSearch) >= 1) {
+            $this->searchPurposes();
+            $this->showPurposeDropdown = true;
+        } else {
+            $this->loadInitialPurposes();
+            $this->showPurposeDropdown = true;
+        }
+        $this->selectedPurpose = null;
+    }
+
+    public function searchPurposes()
+    {
+        $this->purposes = Purpose::where('type', 'stock')
+            ->where('name', 'ilike', '%' . $this->purposeSearch . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectPurpose($purposeId, $purposeName)
+    {
+        $this->selectedPurpose = $purposeId;
+        $this->purposeSearch = $purposeName;
+        $this->purpose = $purposeName;
+        $this->showPurposeDropdown = false;
+        $this->showAddNewPurpose = false;
+    }
+
+    public function showAddNewPurposeForm()
+    {
+        $this->showAddNewPurpose = true;
+        $this->newPurposeName = $this->purposeSearch;
+        $this->showPurposeDropdown = false;
+    }
+
+    public function addNewPurpose()
+    {
+        $this->validate([
+            'newPurposeName' => 'required|string|max:100|unique:purposes,name'
+        ]);
+
+        try {
+            $newPurpose = Purpose::create([
+                'name' => $this->newPurposeName,
+                'type' => 'stock'
+            ]);
+
+            $this->selectPurpose($newPurpose->id, $newPurpose->name);
+            $this->showAddNewPurpose = false;
+            $this->newPurposeName = '';
+
+            // $this->dispatch('swal', [
+            //     'icon' => 'success',
+            //     'title' => 'Success!',
+            //     'text' => 'New purpose added successfully.'
+            // ]);
+        } catch (\Exception $e) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Failed to add new purpose: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function cancelAddNewPurpose()
+    {
+        $this->showAddNewPurpose = false;
+        $this->newPurposeName = '';
+        $this->showPurposeDropdown = true;
+    }
+
+    public function focusPurposeField()
+    {
+        if (empty($this->purposes)) {
+            $this->loadInitialPurposes();
+        }
+        $this->showPurposeDropdown = true;
+    }
+
+    public function hidePurposeDropdown()
+    {
+        // Add a small delay to allow clicking on dropdown items
+        $this->dispatch('hide-dropdown-delayed');
     }
 
     public function confirmSubmitRequest()
@@ -182,6 +303,7 @@ class ShowStock extends Component
 
             // Reset fields and close modal
             $this->reset(['reagent_id', 'request_qty', 'purpose']);
+            $this->resetPurposeFields();
             $this->closeModal();
 
             // Generate new request number for next request

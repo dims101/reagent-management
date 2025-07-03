@@ -81,8 +81,12 @@ class CreateTicket extends Component
             $this->searchCustomers();
             $this->show_customer_dropdown = true;
         } else {
-            $this->customers = [];
-            $this->show_customer_dropdown = false;
+            // Load initial customers if search is empty but dropdown should be shown
+            if ($this->show_customer_dropdown) {
+                $this->loadInitialCustomers();
+            } else {
+                $this->customers = [];
+            }
         }
 
         // Reset selection if search changes
@@ -98,8 +102,12 @@ class CreateTicket extends Component
             $this->searchPurposes();
             $this->show_purpose_dropdown = true;
         } else {
-            $this->purposes = [];
-            $this->show_purpose_dropdown = false;
+            // Load initial purposes if search is empty but dropdown should be shown
+            if ($this->show_purpose_dropdown) {
+                $this->loadInitialPurposes();
+            } else {
+                $this->purposes = [];
+            }
         }
 
         // Reset selection if search changes
@@ -122,6 +130,39 @@ class CreateTicket extends Component
             ->where('type', 'ticket')
             ->limit(10)
             ->get();
+    }
+
+    // New method to load initial purposes
+    public function loadInitialPurposes()
+    {
+        $this->purposes = Purpose::where('type', 'ticket')
+            ->limit(5)
+            ->get();
+    }
+
+    public function loadInitialCustomers()
+    {
+        $this->customers = Customer::orderBy('name')
+            ->limit(5)
+            ->get();
+    }
+
+    public function focusCustomer()
+    {
+        // Always load initial customers when focusing for the first time, like purpose
+        if (empty($this->customer_search)) {
+            $this->loadInitialCustomers();
+        }
+        $this->show_customer_dropdown = true;
+    }
+
+    // New method to handle purpose field focus
+    public function focusPurpose()
+    {
+        if (empty($this->purpose_search)) {
+            $this->loadInitialPurposes();
+        }
+        $this->show_purpose_dropdown = true;
     }
 
     public function selectCustomer($customerId, $customerName)
@@ -257,6 +298,13 @@ class CreateTicket extends Component
     {
         // Delay hiding to allow click events to register
         $this->dispatch('hide-dropdown-delayed');
+    }
+
+    // New method to handle purpose dropdown hiding
+    public function hidePurposeDropdown()
+    {
+        // Delay hiding to allow click events to register
+        $this->dispatch('hide-purpose-dropdown-delayed');
     }
 
     public function getLastSpkNo()
