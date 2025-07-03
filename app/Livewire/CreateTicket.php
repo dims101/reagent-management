@@ -5,9 +5,11 @@ namespace App\Livewire;
 use App\Models\Stock;
 use App\Models\Ticket;
 use App\Models\Reagent;
+use App\Models\Customer;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class CreateTicket extends Component
 {
@@ -22,8 +24,18 @@ class CreateTicket extends Component
     public $start_date;
     public $end_date;
 
+    // Customer related properties
+    public $customer_id;
+    public $customer_search = '';
+    public $customers = [];
+    public $show_customer_dropdown = false;
+    public $selected_customer_name = '';
+    public $is_adding_new_customer = false;
+    public $new_customer_name = '';
+
     protected $listeners = [
         'saveTicket' => 'saveTicket',
+        'customerSelected' => 'selectCustomer',
     ];
 
     protected $rules = [
@@ -36,11 +48,111 @@ class CreateTicket extends Component
         'start_date' => 'nullable|date',
         'end_date' => 'nullable|date|after_or_equal:start_date',
         'attachment' => 'nullable|string|max:255',
+        'customer_id' => 'required',
+        'new_customer_name' => 'required_if:is_adding_new_customer,true|string|max:255',
+    ];
+
+    protected $messages = [
+        'customer_id.required' => 'Please select or add a customer.',
+        'new_customer_name.required_if' => 'Customer name is required.',
     ];
 
     public function updatedReagentId($value)
     {
         $this->reagent_id = $value['value'];
+    }
+
+    public function updatedCustomerSearch()
+    {
+        if (strlen($this->customer_search) >= 1) {
+            $this->searchCustomers();
+            $this->show_customer_dropdown = true;
+        } else {
+            $this->customers = [];
+            $this->show_customer_dropdown = false;
+        }
+
+        // Reset selection if search changes
+        if ($this->customer_search !== $this->selected_customer_name) {
+            $this->customer_id = null;
+            $this->selected_customer_name = '';
+        }
+    }
+
+    public function searchCustomers()
+    {
+        $this->customers = Customer::where('name', 'ILIKE', '%' . $this->customer_search . '%')
+            ->limit(10)
+            ->get();
+    }
+
+    public function selectCustomer($customerId, $customerName)
+    {
+        $this->customer_id = $customerId;
+        $this->selected_customer_name = $customerName;
+        $this->customer_search = $customerName;
+        $this->show_customer_dropdown = false;
+        $this->is_adding_new_customer = false;
+        $this->resetErrorBag(['customer_id', 'new_customer_name']);
+    }
+
+    public function showAddNewCustomer()
+    {
+        $this->is_adding_new_customer = true;
+        $this->show_customer_dropdown = false;
+        $this->customer_id = null;
+        $this->selected_customer_name = '';
+        $this->new_customer_name = $this->customer_search;
+    }
+
+    public function cancelAddNewCustomer()
+    {
+        $this->is_adding_new_customer = false;
+        $this->new_customer_name = '';
+        $this->customer_search = '';
+        $this->resetErrorBag(['new_customer_name']);
+    }
+
+    public function addNewCustomer()
+    {
+        $this->validate([
+            'new_customer_name' => 'required|string|max:255'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Check if customer already exists
+            $existingCustomer = Customer::where('name', 'ILIKE', trim($this->new_customer_name))->first();
+
+            if ($existingCustomer) {
+                $this->selectCustomer($existingCustomer->id, $existingCustomer->name);
+            } else {
+                $newCustomer = Customer::create([
+                    'name' => trim($this->new_customer_name)
+                ]);
+
+                $this->selectCustomer($newCustomer->id, $newCustomer->name);
+            }
+
+            DB::commit();
+
+            $this->is_adding_new_customer = false;
+            $this->new_customer_name = '';
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('swal-error', [
+                'title' => 'Error!',
+                'text' => 'Failed to add customer: ' . $e->getMessage(),
+                'icon' => 'error',
+            ]);
+        }
+    }
+
+    public function hideCustomerDropdown()
+    {
+        // Delay hiding to allow click events to register
+        $this->dispatch('hide-dropdown-delayed');
     }
 
     public function getLastSpkNo()
@@ -58,6 +170,11 @@ class CreateTicket extends Component
 
     public function submit()
     {
+        // Handle new customer creation before validation
+        if ($this->is_adding_new_customer && $this->new_customer_name) {
+            $this->addNewCustomer();
+        }
+
         $this->validate();
 
         // Fire SweetAlert confirmation
@@ -97,11 +214,28 @@ class CreateTicket extends Component
                 'purpose' => $this->purpose,
                 'uom' => $this->uom,
                 'expected_date' => $this->expected_finish_date,
+                'customer_id' => $this->customer_id,
                 'status' => 'open',
             ]);
 
             // Reset form fields
-            $this->reset(['quantity', 'uom', 'purpose', 'expected_finish_date', 'reagent_id', 'attachment', 'start_date', 'end_date']);
+            $this->reset([
+                'quantity',
+                'uom',
+                'purpose',
+                'expected_finish_date',
+                'reagent_id',
+                'attachment',
+                'start_date',
+                'end_date',
+                'customer_id',
+                'customer_search',
+                'selected_customer_name',
+                'is_adding_new_customer',
+                'new_customer_name'
+            ]);
+            $this->customers = [];
+            $this->show_customer_dropdown = false;
             $this->getLastSpkNo(); // Reset SPK number to the next available
 
             // Show success message

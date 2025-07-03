@@ -29,6 +29,7 @@ class Ticket extends Model
         'status',
         'reject_reason',
         'uom',
+        'customer_id',
     ];
 
     protected $casts = [
@@ -55,8 +56,14 @@ class Ticket extends Model
     {
         return $this->belongsTo(User::class, 'requested_by');
     }
+
     public function assignedTo()
     {
         return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }

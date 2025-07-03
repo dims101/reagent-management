@@ -1,0 +1,45 @@
+purpose;type
+Silica HR (pcs);stock
+Ferover  (pcs);stock
+Nitriver 2  (pcs);stock
+Cuver  (pcs);stock
+Alkaline Cyanide (ml);stock
+PAN 0.3% (ml);stock
+Molybdovanadate (ml);stock
+Nitraver 5 (pcs);stock
+SPANDS (ml);stock
+Aluver (pcs);stock
+Bleaching (pcs);stock
+Sulfaver (pcs);stock
+Total Chloride (pcs);stock
+Free Chloride (pcs);stock
+DEHA 1 (pcs);stock
+DEHA 2 )ml);stock
+Zincover (pcs);stock
+Siklohekasanon (ml);stock
+Hydraver 2 (ml);stock
+Nitriver 3 (pcs);stock
+Total Iron (ppm as Fe);stock
+Nitrite (ppm as NO2);stock
+Copper (ppm as Cu);stock
+#Manganese (ppm as Mn);stock
+#OrthoPhosphate (ppm as PO4);stock
+Nitrate (ppm as NO3);stock
+#Fluoride (ppm as F-);stock
+Aluminium (ppm as Al3+);stock
+Sulfate (ppm as SO4);stock
+Total Chlorine (ppm as Cl2);stock
+Free Chlorine (ppm as Cl2);stock
+#Carbohydrazide (ppm);stock
+Zinc (ppm as Zn);stock
+#Hydrazine (ppm as N2H4);stock
+P-Alkalinity (ppm as CaCO3);ticket
+M-Alkalinity (ppm as CaCO3);ticket
+Total Hardness (ppm as CaCO3);ticket
+Ca-Hardness (ppm as CaCO3);ticket
+Chloride ion (ppm as Cl-);ticket
+Silica (ppm as SiO2);ticket
+#Organic (ppm as KMnO4);ticket
+#Amonia (ppm as NH3);ticket
+#COD (ppm);ticket
+#Sulfite (ppm as SO3);ticket

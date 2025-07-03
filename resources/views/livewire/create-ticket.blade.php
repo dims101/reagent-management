@@ -70,15 +70,88 @@
                     <small class="text-danger">{{ $message }}</small>
                 @enderror
             </div>
+
+            <!-- Customer Name with Search -->
+            <div class="form-group col-md-6">
+                <label class="font-weight-medium">Customer Name</label>
+
+                @if ($is_adding_new_customer)
+                    <!-- Add New Customer Mode -->
+                    <div class="input-group">
+                        <input type="text" wire:model.live="new_customer_name"
+                            class="form-control @error('new_customer_name') is-invalid @enderror"
+                            placeholder="Enter new customer name" required>
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-success btn-sm" wire:click="addNewCustomer"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="addNewCustomer">Add</span>
+                                <span wire:loading wire:target="addNewCustomer">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm"
+                                wire:click="cancelAddNewCustomer">Cancel</button>
+                        </div>
+                    </div>
+                    @error('new_customer_name')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                @else
+                    <!-- Search Customer Mode -->
+                    <div class="position-relative">
+                        <input type="text" wire:model.live.debounce.300ms="customer_search"
+                            class="form-control @error('customer_id') is-invalid @enderror"
+                            placeholder="Search customer or type new name..."
+                            wire:focus="$set('show_customer_dropdown', true)" wire:blur="hideCustomerDropdown"
+                            autocomplete="off">
+
+                        <!-- Dropdown for search results -->
+                        @if ($show_customer_dropdown && (count($customers) > 0 || $customer_search))
+                            <div class="dropdown-menu show w-100 mt-1"
+                                style="max-height: 200px; overflow-y: auto; z-index: 1050;">
+                                @if (count($customers) > 0)
+                                    @foreach ($customers as $customer)
+                                        <button type="button"
+                                            class="dropdown-item d-flex justify-content-between align-items-center"
+                                            wire:click="selectCustomer({{ $customer->id }}, '{{ $customer->name }}')">
+                                            <span>{{ $customer->name }}</span>
+                                            {{-- <small class="text-muted">Existing</small> --}}
+                                        </button>
+                                    @endforeach
+                                    <div class="dropdown-divider"></div>
+                                @endif
+
+                                @if ($customer_search && !$customers->contains('name', $customer_search))
+                                    <button type="button"
+                                        class="dropdown-item d-flex justify-content-between align-items-center text-primary"
+                                        wire:click="showAddNewCustomer">
+                                        <span>Add "{{ $customer_search }}" as new customer</span>
+                                        <small class="text-primary">+ New</small>
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                    @error('customer_id')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                @endif
+
+                @if ($selected_customer_name && !$is_adding_new_customer)
+                    <small class="text-primary mt-1">Selected: {{ $selected_customer_name }}</small>
+                @endif
+            </div>
+
+            <!-- Purpose -->
+            <div class="form-group col-md-6">
+                <label class="font-weight-medium">Purpose</label>
+                <textarea wire:model.defer="purpose" class="form-control" rows="4" required></textarea>
+                @error('purpose')
+                    <small class="text-danger">{{ $message }}</small>
+                @enderror
+            </div>
         </div>
-        <!-- Purpose -->
-        <div class="form-group mt-4">
-            <label class="font-weight-medium">Purpose</label>
-            <textarea wire:model.defer="purpose" class="form-control" rows="4" required></textarea>
-            @error('purpose')
-                <small class="text-danger">{{ $message }}</small>
-            @enderror
-        </div>
+
         <div class="text-right mt-4">
             <button type="submit" class="btn btn-success btn-pill" wire:loading.attr="disabled">
                 <span wire:loading.remove>
@@ -96,6 +169,7 @@
         </div>
     </form>
 </div>
+
 @push('scripts')
     <script>
         function initChoices() {
@@ -108,8 +182,11 @@
                 itemSelectText: '',
             });
         }
+
         document.addEventListener('livewire:navigated', function() {
             initChoices();
+
+            // SweetAlert handlers
             Livewire.on('swal', function(data) {
                 const alertData = data[0];
                 if (alertData.then) {
@@ -129,30 +206,48 @@
                         text: alertData.text,
                         icon: alertData.icon,
                         button: false,
-                        timer: 100
+                        timer: 2000
                     });
                 }
             });
+
             Livewire.on('swal-success', function(data) {
+                const alertData = data[0];
                 swal({
-                    title: data.title,
-                    text: data.text,
-                    icon: data.icon,
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
                     button: false,
-                    timer: 50
+                    timer: 2000
                 });
             });
+
             Livewire.on('swal-error', function(data) {
+                const alertData = data[0];
                 swal({
-                    title: data.title,
-                    text: data.text,
-                    icon: data.icon,
+                    title: alertData.title,
+                    text: alertData.text,
+                    icon: alertData.icon,
                     button: false,
-                    timer: 50
+                    timer: 3000
                 });
+            });
+
+            // Handle delayed dropdown hiding
+            Livewire.on('hide-dropdown-delayed', function() {
+                setTimeout(() => {
+                    Livewire.dispatch('$set', ['show_customer_dropdown', false]);
+                }, 200);
             });
         }, {
             once: true
+        });
+
+        // Click outside to close dropdown
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.position-relative')) {
+                Livewire.dispatch('$set', ['show_customer_dropdown', false]);
+            }
         });
     </script>
 @endpush
