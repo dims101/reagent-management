@@ -82,14 +82,14 @@
                             class="form-control @error('new_customer_name') is-invalid @enderror"
                             placeholder="Enter new customer name" required>
                         <div class="input-group-append">
-                            <button type="button" class="btn btn-success btn-sm" wire:click="addNewCustomer"
+                            <button type="button" class="btn btn-success btn-sm btn-pill" wire:click="addNewCustomer"
                                 wire:loading.attr="disabled">
                                 <span wire:loading.remove wire:target="addNewCustomer">Add</span>
                                 <span wire:loading wire:target="addNewCustomer">
                                     <span class="spinner-border spinner-border-sm" role="status"></span>
                                 </span>
                             </button>
-                            <button type="button" class="btn btn-secondary btn-sm"
+                            <button type="button" class="btn btn-secondary btn-sm btn-pill"
                                 wire:click="cancelAddNewCustomer">Cancel</button>
                         </div>
                     </div>
@@ -115,7 +115,7 @@
                                             class="dropdown-item d-flex justify-content-between align-items-center"
                                             wire:click="selectCustomer({{ $customer->id }}, '{{ $customer->name }}')">
                                             <span>{{ $customer->name }}</span>
-                                            {{-- <small class="text-muted">Existing</small> --}}
+                                            <small class="text-muted">Existing</small>
                                         </button>
                                     @endforeach
                                     <div class="dropdown-divider"></div>
@@ -138,17 +138,79 @@
                 @endif
 
                 @if ($selected_customer_name && !$is_adding_new_customer)
-                    <small class="text-primary mt-1">Selected: {{ $selected_customer_name }}</small>
+                    <small class="text-success mt-1">Selected: {{ $selected_customer_name }}</small>
                 @endif
             </div>
 
-            <!-- Purpose -->
+            <!-- Purpose with Search -->
             <div class="form-group col-md-6">
                 <label class="font-weight-medium">Purpose</label>
-                <textarea wire:model.defer="purpose" class="form-control" rows="4" required></textarea>
-                @error('purpose')
-                    <small class="text-danger">{{ $message }}</small>
-                @enderror
+
+                @if ($is_adding_new_purpose)
+                    <!-- Add New Purpose Mode -->
+                    <div class="input-group">
+                        <input type="text" wire:model.live="new_purpose_name"
+                            class="form-control @error('new_purpose_name') is-invalid @enderror"
+                            placeholder="Enter new purpose" required>
+                        <div class="input-group-append">
+                            <button type="button" class="btn btn-success btn-sm btn-pill" wire:click="addNewPurpose"
+                                wire:loading.attr="disabled">
+                                <span wire:loading.remove wire:target="addNewPurpose">Add</span>
+                                <span wire:loading wire:target="addNewPurpose">
+                                    <span class="spinner-border spinner-border-sm" role="status"></span>
+                                </span>
+                            </button>
+                            <button type="button" class="btn btn-secondary btn-sm btn-pill"
+                                wire:click="cancelAddNewPurpose">Cancel</button>
+                        </div>
+                    </div>
+                    @error('new_purpose_name')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                @else
+                    <!-- Search Purpose Mode -->
+                    <div class="position-relative">
+                        <input type="text" wire:model.live.debounce.300ms="purpose_search"
+                            class="form-control @error('purpose_id') is-invalid @enderror"
+                            placeholder="Search purpose or type new..."
+                            wire:focus="$set('show_purpose_dropdown', true)" wire:blur="hideCustomerDropdown"
+                            autocomplete="off">
+
+                        <!-- Dropdown for search results -->
+                        @if ($show_purpose_dropdown && (count($purposes) > 0 || $purpose_search))
+                            <div class="dropdown-menu show w-100 mt-1"
+                                style="max-height: 200px; overflow-y: auto; z-index: 1050;">
+                                @if (count($purposes) > 0)
+                                    @foreach ($purposes as $purpose)
+                                        <button type="button"
+                                            class="dropdown-item d-flex justify-content-between align-items-center"
+                                            wire:click="selectPurpose({{ $purpose->id }}, '{{ $purpose->name }}')">
+                                            <span>{{ $purpose->name }}</span>
+                                            {{-- <small class="text-muted">Existing</small> --}}
+                                        </button>
+                                    @endforeach
+                                    <div class="dropdown-divider"></div>
+                                @endif
+
+                                @if ($purpose_search && !$purposes->contains('name', $purpose_search))
+                                    <button type="button"
+                                        class="dropdown-item d-flex justify-content-between align-items-center text-primary"
+                                        wire:click="showAddNewPurpose">
+                                        <span>Add "{{ $purpose_search }}" as new purpose</span>
+                                        <small class="text-primary">+ New</small>
+                                    </button>
+                                @endif
+                            </div>
+                        @endif
+                    </div>
+                    @error('purpose_id')
+                        <small class="text-danger">{{ $message }}</small>
+                    @enderror
+                @endif
+
+                @if ($selected_purpose_name && !$is_adding_new_purpose)
+                    <small class="text-primary mt-1">Selected: {{ $selected_purpose_name }}</small>
+                @endif
             </div>
         </div>
 

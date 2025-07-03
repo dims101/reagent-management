@@ -21,6 +21,7 @@ class Ticket extends Model
         'assigned_to',
         'reagent_id',
         'purpose',
+        'purpose_id', // Add this if you want to store purpose_id as well
         'expected_date',
         'expected_reason',
         'start_date',
@@ -65,5 +66,13 @@ class Ticket extends Model
     public function customer()
     {
         return $this->belongsTo(Customer::class);
+    }
+
+    /**
+     * Relationship to Purpose.
+     */
+    public function purposeRelation()
+    {
+        return $this->belongsTo(Purpose::class, 'purpose_id');
     }
 }

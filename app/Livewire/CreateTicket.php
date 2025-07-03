@@ -6,6 +6,7 @@ use App\Models\Stock;
 use App\Models\Ticket;
 use App\Models\Reagent;
 use App\Models\Customer;
+use App\Models\Purpose;
 use Livewire\Component;
 use Livewire\Attributes\Title;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,6 @@ class CreateTicket extends Component
     public $spk_no;
     public $quantity;
     public $uom;
-    public $purpose;
     public $expected_finish_date;
     public $reagent_id;
     public $attachment;
@@ -33,28 +33,41 @@ class CreateTicket extends Component
     public $is_adding_new_customer = false;
     public $new_customer_name = '';
 
+    // Purpose related properties
+    public $purpose_id;
+    public $purpose_search = '';
+    public $purposes = [];
+    public $show_purpose_dropdown = false;
+    public $selected_purpose_name = '';
+    public $is_adding_new_purpose = false;
+    public $new_purpose_name = '';
+
     protected $listeners = [
         'saveTicket' => 'saveTicket',
         'customerSelected' => 'selectCustomer',
+        'purposeSelected' => 'selectPurpose',
     ];
 
     protected $rules = [
         'spk_no' => 'required',
         'quantity' => 'required|numeric|min:1',
         'uom' => 'required|string',
-        'purpose' => 'required|string',
         'expected_finish_date' => 'required|date',
         'reagent_id' => 'required',
         'start_date' => 'nullable|date',
         'end_date' => 'nullable|date|after_or_equal:start_date',
         'attachment' => 'nullable|string|max:255',
         'customer_id' => 'required',
+        'purpose_id' => 'required',
         'new_customer_name' => 'required_if:is_adding_new_customer,true|string|max:255',
+        'new_purpose_name' => 'required_if:is_adding_new_purpose,true|string|max:255',
     ];
 
     protected $messages = [
         'customer_id.required' => 'Please select or add a customer.',
+        'purpose_id.required' => 'Please select or add a purpose.',
         'new_customer_name.required_if' => 'Customer name is required.',
+        'new_purpose_name.required_if' => 'Purpose name is required.',
     ];
 
     public function updatedReagentId($value)
@@ -79,9 +92,34 @@ class CreateTicket extends Component
         }
     }
 
+    public function updatedPurposeSearch()
+    {
+        if (strlen($this->purpose_search) >= 1) {
+            $this->searchPurposes();
+            $this->show_purpose_dropdown = true;
+        } else {
+            $this->purposes = [];
+            $this->show_purpose_dropdown = false;
+        }
+
+        // Reset selection if search changes
+        if ($this->purpose_search !== $this->selected_purpose_name) {
+            $this->purpose_id = null;
+            $this->selected_purpose_name = '';
+        }
+    }
+
     public function searchCustomers()
     {
         $this->customers = Customer::where('name', 'ILIKE', '%' . $this->customer_search . '%')
+            ->limit(10)
+            ->get();
+    }
+
+    public function searchPurposes()
+    {
+        $this->purposes = Purpose::where('name', 'ILIKE', '%' . $this->purpose_search . '%')
+            ->where('type', 'ticket')
             ->limit(10)
             ->get();
     }
@@ -96,6 +134,16 @@ class CreateTicket extends Component
         $this->resetErrorBag(['customer_id', 'new_customer_name']);
     }
 
+    public function selectPurpose($purposeId, $purposeName)
+    {
+        $this->purpose_id = $purposeId;
+        $this->selected_purpose_name = $purposeName;
+        $this->purpose_search = $purposeName;
+        $this->show_purpose_dropdown = false;
+        $this->is_adding_new_purpose = false;
+        $this->resetErrorBag(['purpose_id', 'new_purpose_name']);
+    }
+
     public function showAddNewCustomer()
     {
         $this->is_adding_new_customer = true;
@@ -105,12 +153,29 @@ class CreateTicket extends Component
         $this->new_customer_name = $this->customer_search;
     }
 
+    public function showAddNewPurpose()
+    {
+        $this->is_adding_new_purpose = true;
+        $this->show_purpose_dropdown = false;
+        $this->purpose_id = null;
+        $this->selected_purpose_name = '';
+        $this->new_purpose_name = $this->purpose_search;
+    }
+
     public function cancelAddNewCustomer()
     {
         $this->is_adding_new_customer = false;
         $this->new_customer_name = '';
         $this->customer_search = '';
         $this->resetErrorBag(['new_customer_name']);
+    }
+
+    public function cancelAddNewPurpose()
+    {
+        $this->is_adding_new_purpose = false;
+        $this->new_purpose_name = '';
+        $this->purpose_search = '';
+        $this->resetErrorBag(['new_purpose_name']);
     }
 
     public function addNewCustomer()
@@ -149,6 +214,45 @@ class CreateTicket extends Component
         }
     }
 
+    public function addNewPurpose()
+    {
+        $this->validate([
+            'new_purpose_name' => 'required|string|max:255'
+        ]);
+
+        try {
+            DB::beginTransaction();
+
+            // Check if purpose already exists
+            $existingPurpose = Purpose::where('name', 'ILIKE', trim($this->new_purpose_name))
+                ->where('type', 'ticket')
+                ->first();
+
+            if ($existingPurpose) {
+                $this->selectPurpose($existingPurpose->id, $existingPurpose->name);
+            } else {
+                $newPurpose = Purpose::create([
+                    'name' => trim($this->new_purpose_name),
+                    'type' => 'ticket'
+                ]);
+
+                $this->selectPurpose($newPurpose->id, $newPurpose->name);
+            }
+
+            DB::commit();
+
+            $this->is_adding_new_purpose = false;
+            $this->new_purpose_name = '';
+        } catch (\Exception $e) {
+            DB::rollBack();
+            $this->dispatch('swal-error', [
+                'title' => 'Error!',
+                'text' => 'Failed to add purpose: ' . $e->getMessage(),
+                'icon' => 'error',
+            ]);
+        }
+    }
+
     public function hideCustomerDropdown()
     {
         // Delay hiding to allow click events to register
@@ -173,6 +277,11 @@ class CreateTicket extends Component
         // Handle new customer creation before validation
         if ($this->is_adding_new_customer && $this->new_customer_name) {
             $this->addNewCustomer();
+        }
+
+        // Handle new purpose creation before validation
+        if ($this->is_adding_new_purpose && $this->new_purpose_name) {
+            $this->addNewPurpose();
         }
 
         $this->validate();
@@ -211,7 +320,8 @@ class CreateTicket extends Component
                 'request_qty' => $this->quantity,
                 'requested_by' => Auth::id(),
                 'reagent_id' => $this->reagent_id,
-                'purpose' => $this->purpose,
+                'purpose' => $this->selected_purpose_name, // Store purpose name for compatibility
+                'purpose_id' => $this->purpose_id, // Store purpose_id for relationship
                 'uom' => $this->uom,
                 'expected_date' => $this->expected_finish_date,
                 'customer_id' => $this->customer_id,
@@ -222,7 +332,6 @@ class CreateTicket extends Component
             $this->reset([
                 'quantity',
                 'uom',
-                'purpose',
                 'expected_finish_date',
                 'reagent_id',
                 'attachment',
@@ -232,10 +341,17 @@ class CreateTicket extends Component
                 'customer_search',
                 'selected_customer_name',
                 'is_adding_new_customer',
-                'new_customer_name'
+                'new_customer_name',
+                'purpose_id',
+                'purpose_search',
+                'selected_purpose_name',
+                'is_adding_new_purpose',
+                'new_purpose_name'
             ]);
             $this->customers = [];
+            $this->purposes = [];
             $this->show_customer_dropdown = false;
+            $this->show_purpose_dropdown = false;
             $this->getLastSpkNo(); // Reset SPK number to the next available
 
             // Show success message
