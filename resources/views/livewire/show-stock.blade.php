@@ -56,6 +56,7 @@
     </div>
 
     {{-- Livewire Modal --}}
+    {{-- Livewire Modal --}}
     @if ($showModal)
         <div class="modal fade show" style="display: block;" tabindex="-1" role="dialog"
             aria-labelledby="stockRequestModalLabel">
@@ -111,7 +112,6 @@
                                                             wire:click="showAddNewPurposeForm" style="cursor: pointer;">
                                                             <i class="fa fa-plus-circle mr-2"></i>Add new purpose :
                                                             "{{ $purposeSearch }}"
-
                                                         </div>
                                                     @endif
                                                 </div>
@@ -145,6 +145,74 @@
                                             @endif
                                         </div>
                                         @error('purpose')
+                                            <small class="text-danger">{{ $message }}</small>
+                                        @enderror
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="customer" class="form-label">Customer <span
+                                                class="text-danger">*</span></label>
+                                        <div class="position-relative">
+                                            <input type="text" class="form-control" id="customer"
+                                                wire:model.live.debounce.300ms="customerSearch"
+                                                wire:focus="focusCustomerField" wire:blur="hideCustomerDropdown"
+                                                placeholder="Search or select customer" autocomplete="off" required>
+
+                                            {{-- Customer Dropdown --}}
+                                            @if ($showCustomerDropdown && !$showAddNewCustomer)
+                                                <div class="position-absolute w-100 border rounded shadow-sm bg-white"
+                                                    style="z-index: 1000; max-height: 200px; overflow-y: auto; top: 100%;">
+                                                    @if (!empty($customers))
+                                                        @foreach ($customers as $customerItem)
+                                                            <div class="dropdown-item px-3 py-2 cursor-pointer hover:bg-gray-100"
+                                                                wire:click="selectCustomer({{ $customerItem['id'] }}, '{{ $customerItem['name'] }}')"
+                                                                style="cursor: pointer;">
+                                                                {{ $customerItem['name'] }}
+                                                            </div>
+                                                        @endforeach
+                                                    @endif
+
+                                                    {{-- Add New Customer Option --}}
+                                                    @if ($customerSearch && !collect($customers)->contains('name', $customerSearch))
+                                                        <div class="dropdown-item px-3 py-2 cursor-pointer text-primary border-top"
+                                                            wire:click="showAddNewCustomerForm"
+                                                            style="cursor: pointer;">
+                                                            <i class="fa fa-plus-circle mr-2"></i>Add new customer :
+                                                            "{{ $customerSearch }}"
+                                                        </div>
+                                                    @endif
+                                                </div>
+                                            @endif
+
+                                            {{-- Add New Customer Form --}}
+                                            @if ($showAddNewCustomer)
+                                                <div class="position-absolute w-100 border rounded shadow-sm bg-white p-3"
+                                                    style="z-index: 1000; top: 100%;">
+                                                    <div class="form-group mb-2">
+                                                        <label class="form-label small">New Customer Name</label>
+                                                        <input type="text" class="form-control form-control-sm"
+                                                            wire:model="newCustomerName"
+                                                            placeholder="Enter new customer name">
+                                                        @error('newCustomerName')
+                                                            <small class="text-danger">{{ $message }}</small>
+                                                        @enderror
+                                                    </div>
+                                                    <div class="text-right">
+                                                        <button type="button"
+                                                            class="btn btn-success btn-sm btn-pill mr-2"
+                                                            wire:click="addNewCustomer">
+                                                            <i class="fa fa-plus-circle"></i> Add
+                                                        </button>
+                                                        <button type="button"
+                                                            class="btn btn-secondary btn-sm btn-pill"
+                                                            wire:click="cancelAddNewCustomer">
+                                                            <i class="fa fa-times"></i> Cancel
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            @endif
+                                        </div>
+                                        @error('customer')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
                                     </div>

@@ -29,6 +29,18 @@ class ShowOtherStock extends Component
     public $showModal = false;
     public $selectedStock;
 
+    // Add these properties to your ShowStock class
+    public $customer;
+    public $customer_id;
+
+    // Customer search properties
+    public $customerSearch = '';
+    public $selectedCustomer = null;
+    public $customers = [];
+    public $showCustomerDropdown = false;
+    public $showAddNewCustomer = false;
+    public $newCustomerName = '';
+
     // Purpose search properties
     public $purposeSearch = '';
     public $purposeOptions = [];
@@ -151,6 +163,107 @@ class ShowOtherStock extends Component
         $this->searchPurposes();
     }
 
+    public function loadInitialCustomers()
+    {
+        $this->customers = \App\Models\Customer::orderBy('name')
+            ->limit(5)
+            ->get()
+            ->toArray();
+    }
+
+    public function updatedCustomerSearch()
+    {
+        if (strlen($this->customerSearch) >= 1) {
+            $this->searchCustomers();
+            $this->showCustomerDropdown = true;
+        } else {
+            $this->loadInitialCustomers();
+            $this->showCustomerDropdown = true;
+        }
+        $this->selectedCustomer = null;
+    }
+
+    public function searchCustomers()
+    {
+        $this->customers = \App\Models\Customer::where('name', 'ilike', '%' . $this->customerSearch . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectCustomer($customerId, $customerName)
+    {
+        $this->selectedCustomer = $customerId;
+        $this->customerSearch = $customerName;
+        $this->customer = $customerName;
+        $this->customer_id = $customerId;
+        $this->showCustomerDropdown = false;
+        $this->showAddNewCustomer = false;
+    }
+
+    public function showAddNewCustomerForm()
+    {
+        $this->showAddNewCustomer = true;
+        $this->newCustomerName = $this->customerSearch;
+        $this->showCustomerDropdown = false;
+    }
+
+    public function addNewCustomer()
+    {
+        $this->validate([
+            'newCustomerName' => 'required|string|max:100|unique:customers,name'
+        ]);
+
+        try {
+            $newCustomer = \App\Models\Customer::create([
+                'name' => $this->newCustomerName,
+            ]);
+
+            $this->selectCustomer($newCustomer->id, $newCustomer->name);
+            $this->showAddNewCustomer = false;
+            $this->newCustomerName = '';
+        } catch (\Exception $e) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Failed to add new customer: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function cancelAddNewCustomer()
+    {
+        $this->showAddNewCustomer = false;
+        $this->newCustomerName = '';
+        $this->showCustomerDropdown = true;
+    }
+
+    public function focusCustomerField()
+    {
+        if (empty($this->customers)) {
+            $this->loadInitialCustomers();
+        }
+        $this->showCustomerDropdown = true;
+    }
+
+    public function hideCustomerDropdown()
+    {
+        // Add a small delay to allow clicking on dropdown items
+        $this->dispatch('hide-dropdown-delayed');
+    }
+
+    public function resetCustomerFields()
+    {
+        $this->customerSearch = '';
+        $this->selectedCustomer = null;
+        $this->customer_id = null;
+        $this->customers = [];
+        $this->showCustomerDropdown = false;
+        $this->showAddNewCustomer = false;
+        $this->newCustomerName = '';
+    }
+
     public function openRequestModal($stockId)
     {
         $this->selectedStock = Stock::find($stockId);
@@ -163,6 +276,7 @@ class ShowOtherStock extends Component
             ->limit(5)
             ->get()
             ->toArray();
+        $this->loadInitialCustomers();
 
         $this->dispatch('modal-opened');
     }
@@ -171,7 +285,8 @@ class ShowOtherStock extends Component
     {
         $this->showModal = false;
         $this->selectedStock = null;
-        $this->reset(['reagent_id', 'request_qty', 'purpose', 'purposeSearch', 'purposeOptions', 'showPurposeDropdown', 'selectedPurposeId', 'isNewPurpose', 'newPurposeName']);
+        $this->resetCustomerFields(); // Add this line
+        $this->reset(['reagent_id', 'customer', 'request_qty', 'purpose', 'purposeSearch', 'purposeOptions', 'showPurposeDropdown', 'selectedPurposeId', 'isNewPurpose', 'newPurposeName']);
         $this->dispatch('modal-closed');
     }
 
@@ -229,6 +344,7 @@ class ShowOtherStock extends Component
                     'purpose'      => $this->purpose,
                     'requested_by' => $this->requested_by,
                     'approval_id'  => $approval->id,
+                    'customer_id'  => $this->customer_id, // Add customer_id here
                     'status'       => 'pending',
                 ]);
 

@@ -29,6 +29,18 @@ class ShowStock extends Component
     public $showModal = false;
     public $selectedStock;
 
+    // Add these properties to your ShowStock class
+    public $customer;
+    public $customer_id;
+
+    // Customer search properties
+    public $customerSearch = '';
+    public $selectedCustomer = null;
+    public $customers = [];
+    public $showCustomerDropdown = false;
+    public $showAddNewCustomer = false;
+    public $newCustomerName = '';
+
     // Purpose search properties
     public $purposeSearch = '';
     public $selectedPurpose = null;
@@ -37,23 +49,133 @@ class ShowStock extends Component
     public $showAddNewPurpose = false;
     public $newPurposeName = '';
 
+
+    // Add customer validation to your existing rules array
     protected $rules = [
         'request_no' => 'required|integer',
         'reagent_id' => 'required|integer|exists:stocks,id',
         'request_qty' => 'required|numeric|min:0.01',
         'purpose' => 'required|string|max:200',
+        'customer' => 'required|string|max:200', // Add this line
         'requested_by' => 'required|integer|exists:users,id',
         'newPurposeName' => 'nullable|string|max:100|unique:purposes,name',
+        'newCustomerName' => 'nullable|string|max:100|unique:customers,name', // Add this line
     ];
 
+    // Add customer validation message to your existing messages array
     protected $messages = [
         'request_no.required' => 'Request number is required.',
         'reagent_id.required' => 'Reagent is required.',
         'request_qty.required' => 'Request quantity is required.',
         'purpose.required' => 'Purpose is required.',
+        'customer.required' => 'Customer is required.', // Add this line
         'requested_by.required' => 'Requester is required.',
         'newPurposeName.unique' => 'This purpose already exists.',
+        'newCustomerName.unique' => 'This customer already exists.', // Add this line
     ];
+
+    // Add these methods to your ShowStock class
+
+    public function loadInitialCustomers()
+    {
+        $this->customers = \App\Models\Customer::orderBy('name')
+            ->limit(5)
+            ->get()
+            ->toArray();
+    }
+
+    public function updatedCustomerSearch()
+    {
+        if (strlen($this->customerSearch) >= 1) {
+            $this->searchCustomers();
+            $this->showCustomerDropdown = true;
+        } else {
+            $this->loadInitialCustomers();
+            $this->showCustomerDropdown = true;
+        }
+        $this->selectedCustomer = null;
+    }
+
+    public function searchCustomers()
+    {
+        $this->customers = \App\Models\Customer::where('name', 'ilike', '%' . $this->customerSearch . '%')
+            ->orderBy('name')
+            ->limit(10)
+            ->get()
+            ->toArray();
+    }
+
+    public function selectCustomer($customerId, $customerName)
+    {
+        $this->selectedCustomer = $customerId;
+        $this->customerSearch = $customerName;
+        $this->customer = $customerName;
+        $this->customer_id = $customerId;
+        $this->showCustomerDropdown = false;
+        $this->showAddNewCustomer = false;
+    }
+
+    public function showAddNewCustomerForm()
+    {
+        $this->showAddNewCustomer = true;
+        $this->newCustomerName = $this->customerSearch;
+        $this->showCustomerDropdown = false;
+    }
+
+    public function addNewCustomer()
+    {
+        $this->validate([
+            'newCustomerName' => 'required|string|max:100|unique:customers,name'
+        ]);
+
+        try {
+            $newCustomer = \App\Models\Customer::create([
+                'name' => $this->newCustomerName,
+            ]);
+
+            $this->selectCustomer($newCustomer->id, $newCustomer->name);
+            $this->showAddNewCustomer = false;
+            $this->newCustomerName = '';
+        } catch (\Exception $e) {
+            $this->dispatch('swal', [
+                'icon' => 'error',
+                'title' => 'Error!',
+                'text' => 'Failed to add new customer: ' . $e->getMessage()
+            ]);
+        }
+    }
+
+    public function cancelAddNewCustomer()
+    {
+        $this->showAddNewCustomer = false;
+        $this->newCustomerName = '';
+        $this->showCustomerDropdown = true;
+    }
+
+    public function focusCustomerField()
+    {
+        if (empty($this->customers)) {
+            $this->loadInitialCustomers();
+        }
+        $this->showCustomerDropdown = true;
+    }
+
+    public function hideCustomerDropdown()
+    {
+        // Add a small delay to allow clicking on dropdown items
+        $this->dispatch('hide-dropdown-delayed');
+    }
+
+    public function resetCustomerFields()
+    {
+        $this->customerSearch = '';
+        $this->selectedCustomer = null;
+        $this->customer_id = null;
+        $this->customers = [];
+        $this->showCustomerDropdown = false;
+        $this->showAddNewCustomer = false;
+        $this->newCustomerName = '';
+    }
 
     public function openRequestModal($stockId)
     {
@@ -61,6 +183,7 @@ class ShowStock extends Component
         $this->reagent_id = $stockId;
         $this->showModal = true;
         $this->loadInitialPurposes();
+        $this->loadInitialCustomers();
         $this->dispatch('modal-opened');
     }
 
@@ -69,7 +192,8 @@ class ShowStock extends Component
         $this->showModal = false;
         $this->selectedStock = null;
         $this->resetPurposeFields();
-        $this->reset(['reagent_id', 'request_qty', 'purpose']);
+        $this->resetCustomerFields(); // Add this line
+        $this->reset(['reagent_id', 'request_qty', 'purpose', 'customer']); // Add 'customer' to reset
         $this->dispatch('modal-closed');
     }
 
@@ -264,6 +388,7 @@ class ShowStock extends Component
                     'purpose'      => $this->purpose,
                     'requested_by' => $this->requested_by,
                     'approval_id'  => $approval->id,
+                    'customer_id'  => $this->customer_id,
                     'status'       => $status,
                 ]);
                 // Mail::to mail here

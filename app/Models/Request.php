@@ -19,6 +19,7 @@ class Request extends Model
         'purpose',
         'requested_by',
         'approval_id',
+        'customer_id',
         'status',
     ];
 

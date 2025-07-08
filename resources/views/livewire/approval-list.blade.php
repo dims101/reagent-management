@@ -139,6 +139,7 @@
                                     <input type="text" class="form-control" id="requester"
                                         value="{{ $selectedRequest['requester_name'] ?? '' }}" readonly>
                                 </div>
+
                                 {{-- Conditional Approval Reason Field --}}
                                 @if ($showApprovalReason)
                                     <div class="form-group">
@@ -287,6 +288,12 @@
                                     <label for="detail-requester" class="form-label">Requester</label>
                                     <input type="text" class="form-control" id="detail-requester"
                                         value="{{ $selectedApproval['requester_name'] ?? '' }}" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="customer" class="form-label">Customer</label>
+                                    <input type="text" class="form-control" id="customer"
+                                        value="{{ $selectedApproval['customer_name'] ?? '' }}" readonly>
                                 </div>
 
                                 <div class="form-group">

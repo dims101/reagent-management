@@ -35,6 +35,7 @@ class ApprovalList extends Component
             ->join('approvals', 'requests.approval_id', '=', 'approvals.id')
             ->join('users', 'requests.requested_by', '=', 'users.id')
             ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+            ->leftJoin('customers', 'requests.customer_id', '=', 'customers.id')
             ->where('requests.request_no', $request_no)
             ->select([
                 'requests.request_no',
@@ -48,6 +49,7 @@ class ApprovalList extends Component
                 'stocks.remaining_qty',
                 'stocks.quantity_uom',
                 'stocks.reagent_name',
+                'customers.name as customer_name',
             ])
             ->first();
 
