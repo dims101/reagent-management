@@ -2,52 +2,95 @@
 
 namespace App\Livewire;
 
-use App\Models\User;
-use App\Models\Stock;
-use App\Models\Request;
-use Livewire\Component;
 use App\Models\Approval;
-use App\Models\Purpose;
 use App\Models\Department;
-use Livewire\Attributes\Title;
+use App\Models\Purpose;
+use App\Models\Request;
+use App\Models\Stock;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Livewire\Attributes\Title;
+use Livewire\Component;
+use Livewire\WithPagination;
 
 class ShowOtherStock extends Component
 {
-    #[Title('Stock of Others')]
+    use WithPagination;
 
-    public $subTitle = "Manage stock of other departments";
+    protected $paginationTheme = 'bootstrap';
+
+    #[Title('Stock of Others')]
+    public $subTitle = 'Manage stock of other departments';
+
     public $request_no;
+
     public $purpose;
+
     public $reagent_id;
+
     public $request_qty;
+
     public $requested_by;
+
     public $approval_id;
+
+    public $site;
+
+    public $po_no;
 
     // Modal properties
     public $showModal = false;
+
     public $selectedStock;
 
     // Add these properties to your ShowStock class
     public $customer;
+
     public $customer_id;
 
     // Customer search properties
     public $customerSearch = '';
+
     public $selectedCustomer = null;
+
     public $customers = [];
+
     public $showCustomerDropdown = false;
+
     public $showAddNewCustomer = false;
+
     public $newCustomerName = '';
 
     // Purpose search properties
     public $purposeSearch = '';
+
     public $purposeOptions = [];
+
     public $showPurposeDropdown = false;
+
     public $selectedPurposeId = null;
+
     public $isNewPurpose = false;
+
     public $newPurposeName = '';
+
+    public $perPage = 10;
+
+    public $search = '';
+
+    public $reagentFilter = '';
+
+    public $sortField = 'expired_date';
+
+    public $sortDirection = 'asc';
+
+    protected $queryString = [
+        'search' => ['except' => ''],
+        'reagentFilter' => ['except' => ''],
+        'perPage' => ['except' => 10],
+    ];
 
     protected $rules = [
         'request_no' => 'required|integer',
@@ -64,6 +107,41 @@ class ShowOtherStock extends Component
         'purpose.required' => 'Purpose is required.',
         'requested_by.required' => 'Requester is required.',
     ];
+
+    // ✅ TAMBAHKAN INI - Methods untuk search, filter, dan sorting
+    public function updatedSearch()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedReagentFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatedPerPage()
+    {
+        $this->resetPage();
+    }
+
+    public function sortBy($field)
+    {
+        if ($this->sortField === $field) {
+            $this->sortDirection = $this->sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            $this->sortField = $field;
+            $this->sortDirection = 'asc';
+        }
+    }
+
+    public function getReagentListProperty()
+    {
+        return Stock::where('dept_owner_id', '<>', Auth::user()->dept_id)
+            ->select('reagent_name')
+            ->distinct()
+            ->orderBy('reagent_name')
+            ->pluck('reagent_name');
+    }
 
     public function updatedPurposeSearch()
     {
@@ -82,7 +160,7 @@ class ShowOtherStock extends Component
         } else {
             // Search purposes based on input
             $this->purposeOptions = Purpose::where('type', 'stock')
-                ->where('name', 'ILIKE', '%' . $this->purposeSearch . '%')
+                ->where('name', 'ILIKE', '%'.$this->purposeSearch.'%')
                 ->orderBy('name')
                 ->limit(10)
                 ->get()
@@ -112,16 +190,16 @@ class ShowOtherStock extends Component
     public function saveNewPurpose()
     {
         $this->validate([
-            'newPurposeName' => 'required|string|max:200|unique:purposes,name'
+            'newPurposeName' => 'required|string|max:200|unique:purposes,name',
         ], [
             'newPurposeName.required' => 'Purpose name is required.',
-            'newPurposeName.unique' => 'This purpose already exists.'
+            'newPurposeName.unique' => 'This purpose already exists.',
         ]);
 
         try {
             $newPurpose = Purpose::create([
                 'name' => $this->newPurposeName,
-                'type' => 'stock'
+                'type' => 'stock',
             ]);
 
             $this->selectedPurposeId = $newPurpose->id;
@@ -139,7 +217,7 @@ class ShowOtherStock extends Component
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
-                'text' => 'Failed to add new purpose: ' . $e->getMessage()
+                'text' => 'Failed to add new purpose: '.$e->getMessage(),
             ]);
         }
     }
@@ -185,7 +263,7 @@ class ShowOtherStock extends Component
 
     public function searchCustomers()
     {
-        $this->customers = \App\Models\Customer::where('name', 'ilike', '%' . $this->customerSearch . '%')
+        $this->customers = \App\Models\Customer::where('name', 'ilike', '%'.$this->customerSearch.'%')
             ->orderBy('name')
             ->limit(10)
             ->get()
@@ -212,7 +290,7 @@ class ShowOtherStock extends Component
     public function addNewCustomer()
     {
         $this->validate([
-            'newCustomerName' => 'required|string|max:100|unique:customers,name'
+            'newCustomerName' => 'required|string|max:100|unique:customers,name',
         ]);
 
         try {
@@ -227,7 +305,7 @@ class ShowOtherStock extends Component
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
-                'text' => 'Failed to add new customer: ' . $e->getMessage()
+                'text' => 'Failed to add new customer: '.$e->getMessage(),
             ]);
         }
     }
@@ -298,12 +376,13 @@ class ShowOtherStock extends Component
             // Check if requested quantity doesn't exceed available stock
             $stock = Stock::find($this->reagent_id);
 
-            if (!$stock) {
+            if (! $stock) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
                     'title' => 'Error!',
-                    'text' => 'Selected reagent not found.'
+                    'text' => 'Selected reagent not found.',
                 ]);
+
                 return;
             }
 
@@ -311,8 +390,9 @@ class ShowOtherStock extends Component
                 $this->dispatch('swal', [
                     'icon' => 'error',
                     'title' => 'Error!',
-                    'text' => 'Request quantity cannot exceed available quantity.'
+                    'text' => 'Request quantity cannot exceed available quantity.',
                 ]);
+
                 return;
             }
 
@@ -323,7 +403,7 @@ class ShowOtherStock extends Component
                 $pic_id = $department ? $department->pic_id : null;
                 $manager_id = $department ? $department->manager_id : null;
                 $approval = Approval::create([
-                    'dept_id'   => $deptId,
+                    'dept_id' => $deptId,
                     'assigned_pic_id' => $pic_id,
                     'assigned_manager_id' => $manager_id,
                 ]);
@@ -331,21 +411,22 @@ class ShowOtherStock extends Component
                 $this->dispatch('swal', [
                     'icon' => 'error',
                     'title' => 'Error!',
-                    'text' => 'Failed to create approval: ' . $e->getMessage()
+                    'text' => 'Failed to create approval: '.$e->getMessage(),
                 ]);
+
                 return;
             }
 
             try {
                 Request::create([
-                    'request_no'   => $this->request_no,
-                    'reagent_id'   => $this->reagent_id,
-                    'request_qty'  => $this->request_qty,
-                    'purpose'      => $this->purpose,
+                    'request_no' => $this->request_no,
+                    'reagent_id' => $this->reagent_id,
+                    'request_qty' => $this->request_qty,
+                    'purpose' => $this->purpose,
                     'requested_by' => $this->requested_by,
-                    'approval_id'  => $approval->id,
-                    'customer_id'  => $this->customer_id, // Add customer_id here
-                    'status'       => 'pending',
+                    'approval_id' => $approval->id,
+                    'customer_id' => $this->customer_id, // Add customer_id here
+                    'status' => 'pending',
                 ]);
 
                 // Mail::to mail here
@@ -353,13 +434,66 @@ class ShowOtherStock extends Component
                 $mailPicId = Department::find($deptOwnerId)->pic_id;
                 $pic = User::find($mailPicId);
 
-                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url') . '/approval/'));
+                // SEMUA PIC DARI BERBAGAI SITE
+                $picBandung = User::whereIn('id', [32])->get(); // 32
+                $picSemarang = User::whereIn('id', [18])->get(); // 18
+                $picGresik = User::whereIn('id', [30])->get(); // 30
+                $picTangerang = User::whereIn('id', [37])->get(); // 37
+
+                Mail::to($pic->email)->send(new \App\Mail\SendApprovalPIC($pic->name, config('app.url').'/approval/'));
+
+                if (strtolower($stock->site) == 'tangerang') {
+                    if ($picTangerang->isNotEmpty()) {
+                        foreach ($picTangerang as $user) {
+                            Mail::to($user->email)->send(
+                                new \App\Mail\SendPICApprovalPerSite($user->name, config('app.url').'/approval/', $stock->site)
+                            );
+                            Log::info("Email dikirim ke {$user->email}");
+                        }
+                    } else {
+                        Log::warning('Tidak ditemukan user dengan ID 24 dan 7');
+                    }
+                } elseif (strtolower($stock->site) == 'semarang') {
+                    if ($picSemarang->isNotEmpty()) {
+                        foreach ($picSemarang as $user) {
+                            Mail::to($user->email)->send(
+                                new \App\Mail\SendPICApprovalPerSite($user->name, config('app.url').'/approval/', $stock->site)
+                            );
+                            Log::info("Email dikirim ke {$user->email}");
+                        }
+                    } else {
+                        Log::warning('Tidak ditemukan user dengan ID 24 dan 7');
+                    }
+                } elseif (strtolower($stock->site) == 'gresik') {
+                    if ($picGresik->isNotEmpty()) {
+                        foreach ($picGresik as $user) {
+                            Mail::to($user->email)->send(
+                                new \App\Mail\SendPICApprovalPerSite($user->name, config('app.url').'/approval/', $stock->site)
+                            );
+                            Log::info("Email dikirim ke {$user->email}");
+                        }
+                    } else {
+                        Log::warning('Tidak ditemukan user dengan ID 24 dan 7');
+                    }
+                } elseif (strtolower($stock->site) == 'bandung') {
+                    if ($picBandung->isNotEmpty()) {
+                        foreach ($picBandung as $user) {
+                            Mail::to($user->email)->send(
+                                new \App\Mail\SendPICApprovalPerSite($user->name, config('app.url').'/approval/', $stock->site)
+                            );
+                            Log::info("Email dikirim ke {$user->email}");
+                        }
+                    } else {
+                        Log::warning('Tidak ditemukan user dengan ID 24 dan 7');
+                    }
+                }
             } catch (\Exception $e) {
                 $this->dispatch('swal', [
                     'icon' => 'error',
                     'title' => 'Error!',
-                    'text' => 'Failed to submit request: ' . $e->getMessage()
+                    'text' => 'Failed to submit request: '.$e->getMessage(),
                 ]);
+
                 return;
             }
 
@@ -378,14 +512,14 @@ class ShowOtherStock extends Component
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Validation Error!',
-                'text' => collect($e->errors())->flatten()->first()
+                'text' => collect($e->errors())->flatten()->first(),
             ]);
         } catch (\Exception $e) {
             // Handle other errors
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Error!',
-                'text' => 'Failed to submit request: ' . $e->getMessage()
+                'text' => 'Failed to submit request: '.$e->getMessage(),
             ]);
         }
     }
@@ -398,13 +532,36 @@ class ShowOtherStock extends Component
         $this->request_no = $lastRequestNo ? $lastRequestNo + 1 : 1;
     }
 
+    // ✅ GANTI METHOD INI
     public function render()
     {
+        $query = Stock::with('department')
+            ->where('dept_owner_id', '<>', Auth::user()->dept_id);
+
+        // Search
+        if ($this->search) {
+            $query->where(function ($q) {
+                $q->where('reagent_name', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('maker', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('catalog_no', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('location', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('site', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('po_no', 'ilike', '%'.$this->search.'%')
+                    ->orWhere('no_lot', 'ilike', '%'.$this->search.'%');
+            });
+        }
+
+        // Filter by reagent
+        if ($this->reagentFilter) {
+            $query->where('reagent_name', $this->reagentFilter);
+        }
+
+        // Sorting
+        $query->orderBy($this->sortField, $this->sortDirection);
+
         return view('livewire.show-other-stock', [
-            'stocks' => Stock::with('department')
-                ->where('dept_owner_id', "<>", Auth::user()->dept_id)
-                ->orderBy('expired_date', 'asc')
-                ->get()
+            'stocks' => $query->paginate($this->perPage),
+            'reagentList' => $this->reagentList,
         ]);
     }
 }

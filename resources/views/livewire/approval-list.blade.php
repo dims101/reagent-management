@@ -1,31 +1,95 @@
 <x-slot:subTitle>{{ $subTitle }}</x-slot>
 <div>
-    <div class="row mt--2">
+    <div class="row mt-2">
         <div class="col-md-12">
             <div class="card full-height">
                 <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center">
+                                <label class="mb-0 me-2">Show</label>
+                                <select wire:model.live="perPage" class="form-control form-control-sm"
+                                    style="width: 80px;">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <label class="mb-0 ms-2">entries</label>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-end align-items-center">
+                                <input type="text" wire:model.live.debounce.300ms="search"
+                                    class="form-control form-control-sm" placeholder="Search..." style="width: 250px;">
+                            </div>
+                        </div>
+                    </div>
                     <div class="table-responsive">
                         <table class="display table table-striped table-hover datatable">
                             <thead class="thead-light text-center">
                                 <tr>
-                                    <th>Status Approval</th>
-                                    <th>Request No</th>
-                                    <th>Request Date</th>
-                                    <th>Requester</th>
-                                    <th>Requested to</th>
+
+                                    <th wire:click="sortBy('status')" style="cursor: pointer;">
+                                        Status Approval
+                                        @if ($sortField === 'status')
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </th>
+
+                                    <th wire:click="sortBy('request_no')" style="cursor: pointer;">
+                                        Request No
+                                        @if ($sortField === 'request_no')
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </th>
+
+                                    <th wire:click="sortBy('request_date')" style="cursor: pointer;">
+                                        Request Date
+                                        @if ($sortField === 'request_date')
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </th>
+
+                                    <th wire:click="sortBy('requester')" style="cursor: pointer;">
+                                        Requester
+                                        @if ($sortField === 'requester')
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </th>
+                                    <th wire:click="sortBy('requested_to')" style="cursor: pointer;">
+                                        Requested to
+                                        @if ($sortField === 'requested_to')
+                                            <i class="fas fa-sort-{{ $sortDirection === 'asc' ? 'up' : 'down' }}"></i>
+                                        @else
+                                            <i class="fas fa-sort text-muted"></i>
+                                        @endif
+                                    </th>
+
                                     <th>Detail</th>
                                 </tr>
                             </thead>
                             <tbody class="text-center">
+
                                 @php
                                     $filteredApprovals = $approvals;
-                                    if (auth()->user()->role_id == 2) {
-                                        $filteredApprovals = collect($approvals)
+
+                                    if (auth()->user()->role_id == 2 && auth()->user()->id == 21) {
+                                        $filteredApprovals = collect($approvals->items())
                                             ->where('status', 'waiting manager')
-                                            ->where('requested_to', auth()->user()->department->name)
+                                            ->where('requested_to')
                                             ->values();
                                     }
                                 @endphp
+
 
                                 @forelse($filteredApprovals as $approval)
                                     <tr>
@@ -33,9 +97,8 @@
                                             <div class="row">
                                                 <div class="col-2 text-right mr-0">
                                                     @if (
-                                                        ((auth()->user()->role_id == 2 && $approval['status'] === 'waiting manager') ||
-                                                            (auth()->user()->role_id == 3 && $approval['status'] === 'pending')) &&
-                                                            $approval['requested_to'] == auth()->user()->department->name)
+                                                        (auth()->user()->role_id == 2 && auth()->user()->id == 21 && $approval['status'] === 'waiting manager') ||
+                                                            (auth()->user()->role_id == 3 && auth()->user()->id == 37 && $approval['status'] === 'pending'))
                                                         <a href="#" class="me-2 text-primary"
                                                             title="Approve/Reject"
                                                             wire:click.prevent="openApprovalModal('{{ $approval['request_no'] }}')">
@@ -60,7 +123,8 @@
                                             </div>
                                         </td>
                                         <td>{{ $approval['request_no'] }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($approval['request_date'])->format('d-m-Y') }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($approval['request_date'])->format('d-m-Y') }}
+                                        </td>
                                         <td>{{ $approval['requester'] }}</td>
                                         <td>{{ $approval['requested_to'] }}</td>
                                         <td>
@@ -77,6 +141,24 @@
                                 @endforelse
                             </tbody>
                         </table>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center px-3 pb-3">
+                        <div>
+                            @if ($approvals instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                Showing {{ $approvals->firstItem() ?? 0 }} to {{ $approvals->lastItem() ?? 0 }}
+                                of {{ $approvals->total() }} entries
+                                @if (!empty($search))
+                                    <span class="text-muted">(filtered from total entries)</span>
+                                @endif
+                            @else
+                                Showing {{ $approvals->count() }} entries
+                            @endif
+                        </div>
+                        <div>
+                            @if ($approvals instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                {{ $approvals->links() }}
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
@@ -97,7 +179,8 @@
                             <span aria-hidden="true">&times;</span>
                         </button>
                     </div>
-                    <div class="modal-body">
+                    <div class="modal-body" style="max-height: 70vh; overflow-y: auto;">
+
                         <div class="row">
                             {{-- Left Column --}}
                             <div class="col-md-6">
@@ -108,21 +191,27 @@
                                 </div>
 
                                 <div class="form-group">
-                                    <label for="request-quantity" class="form-label">Request Quantity</label>
+                                    <label for="reagent-name" class="form-label">Reagent Name</label>
+                                    <textarea class="form-control" id="reagent-name" rows="2" readonly>{{ $selectedRequest['reagent_name'] ?? '' }}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="purpose" class="form-label">Purpose of Requesting</label>
+                                    <textarea class="form-control" id="purpose" rows="3" readonly>{{ $selectedRequest['purpose'] ?? '' }}</textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="available-qty" class="form-label">Available Quantity</label>
                                     <div class="input-group">
-                                        <input type="text" class="form-control" id="request-quantity"
-                                            value="{{ $selectedRequest['request_qty'] ?? '' }}" readonly>
+                                        <input type="text" class="form-control" id="available-qty"
+                                            value="{{ isset($selectedRequest['remaining_qty']) ? rtrim(rtrim(strval($selectedRequest['remaining_qty']), '0'), '.') : '' }}"
+                                            readonly>
                                         <div class="input-group-append">
                                             <span
                                                 class="input-group-text">{{ $selectedRequest['quantity_uom'] ?? '' }}</span>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label for="purpose" class="form-label">Purpose</label>
-                                    <textarea class="form-control" id="purpose" rows="3" readonly>{{ $selectedRequest['purpose'] ?? '' }}</textarea>
-                                </div>
-
                             </div>
 
                             {{-- Right Column --}}
@@ -135,31 +224,55 @@
                                 </div>
 
                                 <div class="form-group">
+                                    <label for="request-quantity" class="form-label">Request Quantity</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control" id="request-quantity"
+                                            value="{{ isset($selectedRequest['request_qty']) ? rtrim(rtrim(strval($selectedRequest['request_qty']), '0'), '.') : '' }}"
+                                            readonly>
+                                        <div class="input-group-append">
+                                            <span
+                                                class="input-group-text">{{ $selectedRequest['quantity_uom'] ?? '' }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
                                     <label for="requester" class="form-label">Requester</label>
                                     <input type="text" class="form-control" id="requester"
                                         value="{{ $selectedRequest['requester_name'] ?? '' }}" readonly>
                                 </div>
 
-                                {{-- Conditional Approval Reason Field --}}
+                                <div class="form-group">
+                                    <label for="customer" class="form-label">Customer</label>
+                                    <input type="text" class="form-control" id="customer"
+                                        value="{{ $selectedRequest['customer_name'] ?? '' }}" readonly>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="detail-status" class="form-label">Status</label>
+                                    <input type="text" class="form-control" id="detail-status"
+                                        value="{{ ucfirst($selectedRequest['approval_status'] ?? '') }}" readonly>
+                                </div>
+
+                                {{-- Approval / Reject reason areas remain controlled by $showApprovalReason / $showRejectReason --}}
                                 @if ($showApprovalReason)
                                     <div class="form-group">
                                         <label for="approval_reason" class="form-label">Approval Reason <span
                                                 class="text-danger">*</span></label>
                                         <textarea class="form-control @error('approvalReason') is-invalid @enderror" id="approval_reason"
-                                            wire:model="approvalReason" placeholder="Enter a reason (required for approval)" rows="3"></textarea>
+                                            wire:model="approvalReason" placeholder="Enter a reason (optional)" rows="3"></textarea>
                                         @error('approvalReason')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
                                     </div>
                                 @endif
 
-                                {{-- Conditional Reject Reason Field --}}
                                 @if ($showRejectReason)
                                     <div class="form-group">
                                         <label for="reject_reason" class="form-label">Reject Reason <span
                                                 class="text-danger">*</span></label>
-                                        <textarea class="form-control @error('rejectReason') is-invalid @enderror" id="reject_reason" wire:model="rejectReason"
-                                            placeholder="Enter a reason (required for rejection)" rows="3"></textarea>
+                                        <textarea class="form-control @error('rejectReason') is-invalid @enderror" id="reject_reason"
+                                            wire:model="rejectReason" placeholder="Enter a reason (required for rejection)" rows="3"></textarea>
                                         @error('rejectReason')
                                             <small class="text-danger">{{ $message }}</small>
                                         @enderror
@@ -193,11 +306,7 @@
                             wire:loading.attr="disabled">
                             <span wire:loading.remove wire:target="approveRequest,confirmApprove">
                                 <i class="fa fa-check"></i>
-                                @if ($showApprovalReason)
-                                    Confirm Approve
-                                @else
-                                    Approve Request
-                                @endif
+                                Approve Request
                             </span>
                             <span wire:loading wire:target="approveRequest">
                                 <i class="fa fa-spinner fa-spin"></i> Processing...
@@ -254,7 +363,8 @@
                                     <label for="detail-available-qty" class="form-label">Available Quantity</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control" id="detail-available-qty"
-                                            value="{{ $selectedApproval['remaining_qty'] ?? '' }}" readonly>
+                                            value="{{ isset($selectedApproval['remaining_qty']) ? rtrim(rtrim(strval($selectedApproval['remaining_qty']), '0'), '.') : '' }}"
+                                            readonly>
                                         <div class="input-group-append">
                                             <span
                                                 class="input-group-text">{{ $selectedApproval['quantity_uom'] ?? '' }}</span>
@@ -276,7 +386,8 @@
                                     <label for="detail-request-quantity" class="form-label">Request Quantity</label>
                                     <div class="input-group">
                                         <input type="text" class="form-control" id="detail-request-quantity"
-                                            value="{{ $selectedApproval['request_qty'] ?? '' }}" readonly>
+                                            value="{{ isset($selectedApproval['request_qty']) ? rtrim(rtrim(strval($selectedApproval['request_qty']), '0'), '.') : '' }}"
+                                            readonly>
                                         <div class="input-group-append">
                                             <span
                                                 class="input-group-text">{{ $selectedApproval['quantity_uom'] ?? '' }}</span>
@@ -317,33 +428,20 @@
 </div>
 @push('scripts')
     <script>
-        initDataTable = function() {
-            if ($.fn.DataTable.isDataTable('.datatable')) {
-                $('.datatable').DataTable().destroy();
-                // alert('code triggered');
-            }
-            $('.datatable').DataTable({
-                "pageLength": 10,
-                "responsive": true,
-                "order": [
-                    [1, "desc"]
-                ], // Order by request date descending
-            });
-        };
         document.addEventListener('livewire:initialized', function() {
-            // Listen for confirmation events
+
+            // Listen for modal opened event
             Livewire.on('modal-opened', () => {
                 document.body.classList.add('modal-open');
             });
 
+            // Listen for modal closed event
             Livewire.on('modal-closed', () => {
-
                 document.body.classList.remove('modal-open');
-                setTimeout(initDataTable, 100);
             });
 
+            // Listen for confirm approve event
             Livewire.on('confirm-approve', (event) => {
-                // Handle both array and object data formats
                 const data = Array.isArray(event) ? event[0] : event;
                 swal({
                     title: "Are you sure?",
@@ -365,14 +463,13 @@
                     }
                 }).then((isConfirm) => {
                     if (isConfirm) {
-                        // Call the Livewire method with the request_no
                         @this.call('confirmApprove', data.request_no);
                     }
                 });
             });
 
+            // Listen for confirm reject event
             Livewire.on('confirm-reject', (event) => {
-                // Handle both array and object data formats
                 const data = Array.isArray(event) ? event[0] : event;
                 swal({
                     title: "Are you sure?",
@@ -394,19 +491,14 @@
                     }
                 }).then(function(isConfirm) {
                     if (isConfirm) {
-                        // Call the Livewire method with request_no and reason
                         @this.call('confirmReject', data.request_no, data.rejectReason);
                     }
                 });
             });
 
-            // Listen for approval updates
+            // Listen for approval updated event
             Livewire.on('approvalUpdated', () => {
                 console.log('Approval list updated');
-                // Reinitialize DataTable if needed
-                setTimeout(() => {
-                    initDataTable;
-                }, 100);
             });
 
             // Listen for SweetAlert events
@@ -422,132 +514,9 @@
                     }
                 });
             });
+
         }, {
             once: true
         });
-        // Uncomment the following lines if you want to initialize DataTable on Livewire initialization
-
-        // document.addEventListener('livewire:initialized', function() {
-        //     // Initialize DataTable
-        //     alert('Livewire initialized');
-        //     $('.datatable').DataTable({
-        //         "order": [
-        //             [2, "asc"]
-        //         ], // Order by request date ascending
-        //         "pageLength": 10,
-        //         "responsive": true
-        //     });
-        // });
-
-        document.addEventListener('livewire:navigated', function(event) {
-            // Handle navigation events if needed
-            setTimeout(initDataTable, 100);
-            Livewire.on('modal-opened', () => {
-                document.body.classList.add('modal-open');
-            });
-
-            Livewire.on('modal-closed', () => {
-                document.body.classList.remove('modal-open');
-                setTimeout(initDataTable, 100);
-            });
-            Livewire.on('confirm-approve', (event) => {
-                // Handle both array and object data formats
-                const data = Array.isArray(event) ? event[0] : event;
-
-                swal({
-                    title: "Are you sure?",
-                    text: "Do you want to approve this request?",
-                    icon: "warning",
-                    buttons: {
-                        cancel: {
-                            text: "Cancel",
-                            visible: true,
-                            className: "btn btn-secondary btn-pill",
-                            closeModal: true,
-                        },
-                        confirm: {
-                            text: "Yes, approve it!",
-                            visible: true,
-                            className: "btn btn-success btn-pill",
-                            closeModal: true
-                        }
-                    }
-                }).then((isConfirm) => {
-                    if (isConfirm) {
-                        // Call the Livewire method with the request_no
-                        @this.call('confirmApprove', data.request_no);
-                    }
-                });
-            });
-
-            Livewire.on('confirm-reject', (event) => {
-                // Handle both array and object data formats
-                const data = Array.isArray(event) ? event[0] : event;
-
-                swal({
-                    title: "Are you sure?",
-                    text: "Do you want to reject this request?",
-                    icon: "warning",
-                    buttons: {
-                        cancel: {
-                            text: "Cancel",
-                            visible: true,
-                            className: "btn btn-secondary btn-pill",
-                            closeModal: true,
-                        },
-                        confirm: {
-                            text: "Yes, reject it!",
-                            visible: true,
-                            className: "btn btn-danger btn-pill",
-                            closeModal: true
-                        }
-                    }
-                }).then(function(isConfirm) {
-                    if (isConfirm) {
-                        // Call the Livewire method with request_no and reason
-                        @this.call('confirmReject', data.request_no, data.reason);
-                    }
-                });
-            });
-
-            // Listen for approval updates
-            Livewire.on('approvalUpdated', () => {
-                console.log('Approval list updated');
-                // Reinitialize DataTable if needed
-                if ($.fn.DataTable.isDataTable('.datatable')) {
-                    $('.datatable').DataTable().destroy();
-                }
-                setTimeout(() => {
-                    initDataTable;
-                }, 100);
-            });
-
-            // Listen for SweetAlert events
-            Livewire.on('swal', (event) => {
-                const data = Array.isArray(event) ? event[0] : event;
-                swal({
-                    title: data.title,
-                    text: data.text,
-                    icon: data.icon,
-                    button: {
-                        text: "OK",
-                        className: "btn btn-primary btn-pill"
-                    }
-                });
-            });
-        }, {
-            once: true
-        });
-
-        // $(document).ready(function() {
-        //     alert('Document is ready');
-        //     $('.datatable').DataTable({
-        //         "order": [
-        //             [2, "asc"]
-        //         ], // Order by request date descending
-        //         "pageLength": 10,
-        //         "responsive": true
-        //     });
-        // });
     </script>
 @endpush
