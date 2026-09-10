@@ -81,13 +81,6 @@
 
                                 @php
                                     $filteredApprovals = $approvals;
-
-                                    if (auth()->user()->role_id == 2 && auth()->user()->id == 21) {
-                                        $filteredApprovals = collect($approvals->items())
-                                            ->where('status', 'waiting manager')
-                                            ->where('requested_to')
-                                            ->values();
-                                    }
                                 @endphp
 
 
@@ -97,8 +90,10 @@
                                             <div class="row">
                                                 <div class="col-2 text-right mr-0">
                                                     @if (
-                                                        (auth()->user()->role_id == 2 && auth()->user()->id == 21 && $approval['status'] === 'waiting manager') ||
-                                                            (auth()->user()->role_id == 3 && auth()->user()->id == 37 && $approval['status'] === 'pending'))
+                                                        (auth()->user()->role_id == 3 && $approval['status'] === 'pending') ||
+                                                        (auth()->user()->role_id == 2 && $approval['status'] === 'waiting manager') ||
+                                                        (auth()->user()->role_id == 1 && in_array($approval['status'], ['pending', 'waiting manager']))
+                                                    )
                                                         <a href="#" class="me-2 text-primary"
                                                             title="Approve/Reject"
                                                             wire:click.prevent="openApprovalModal('{{ $approval['request_no'] }}')">

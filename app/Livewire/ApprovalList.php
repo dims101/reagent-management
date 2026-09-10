@@ -122,8 +122,8 @@ class ApprovalList extends Component
         // Ambil dept_id langsung dari model, fallback ke DB jika null
         $deptId = Auth::user()?->dept_id ?? DB::table('users')->where('id', $authId)->value('dept_id');
 
-        // Validasi dept_id
-        if (empty($deptId) || ! is_numeric($deptId)) {
+        // Validasi dept_id (diizinkan jika user memiliki dept_id atau merupakan Super User / Admin)
+        if ((empty($deptId) || ! is_numeric($deptId)) && Auth::user()?->role_id != 1) {
             $this->dispatch('swal', [
                 'icon' => 'error',
                 'title' => 'Unauthorized',
@@ -135,9 +135,9 @@ class ApprovalList extends Component
 
         // Query data request
         $request = \App\Models\Request::query()
-            ->join('approvals', 'requests.approval_id', '=', 'approvals.id')
-            ->join('users', 'requests.requested_by', '=', 'users.id')
-            ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
+            ->leftJoin('approvals', 'requests.approval_id', '=', 'approvals.id')
+            ->leftJoin('users', 'requests.requested_by', '=', 'users.id')
+            ->leftJoin('stocks', 'requests.reagent_id', '=', 'stocks.id')
             ->leftJoin('customers', 'requests.customer_id', '=', 'customers.id')
             ->where('requests.request_no', $request_no)
             ->select([
@@ -378,17 +378,21 @@ class ApprovalList extends Component
                 return $this->swalError('User not found.');
             }
 
-            $statusMap = [
-                37 => 'waiting manager', // PIC
-                21 => 'approved',        // Manager
-            ];
+            $isPic = ($user->role_id == 3);
+            $isManager = ($user->role_id == 2 || $user->role_id == 1);
 
-            if (! isset($statusMap[$user->id])) {
+            if (! $isPic && ! $isManager) {
                 return $this->swalError('You don\'t have authorization to approve this request.');
             }
 
             // update request status
-            $request->update(['status' => $statusMap[$user->id]]);
+            if ($user->role_id == 3) {
+                $newStatus = 'waiting manager';
+            } else {
+                $newStatus = 'approved';
+            }
+
+            $request->update(['status' => $newStatus]);
 
             $approval = $request->approval;
 
@@ -403,7 +407,7 @@ class ApprovalList extends Component
             }
 
             if ($approval) {
-                if ($user->id == 37) { // PIC
+                if ($newStatus === 'waiting manager') { // PIC
                     $approval->update([
                         'approval_reason' => $this->approvalReason ?: ($user->name.': Approved'),
                         'assigned_pic_date' => now(),
@@ -413,7 +417,7 @@ class ApprovalList extends Component
                         // production: consider ->queue() instead of ->send()
                         Mail::to($manager->email)->send(new \App\Mail\SendApprovalManager($manager->name, url('/approval')));
                     }
-                } elseif ($user->id == 21) { // Manager
+                } else { // Manager
                     $approval->update([
                         'approval_reason' => $this->approvalReason ?: 'Approved by Manager',
                         'assigned_manager_date' => now(),
@@ -645,21 +649,21 @@ class ApprovalList extends Component
     {
         $user = Auth::user();
 
-        // Hanya user dengan ID 21 dan 37 yang boleh lihat
-        $allowedViewerIds = [21, 37];
-        if (! $user || ! in_array($user->id, $allowedViewerIds, true)) {
+        // Role ID: 1 = Super User, 2 = Manager, 3 = PIC
+        $allowedRoles = [1, 2, 3];
+        if (! $user || ! in_array((int) $user->role_id, $allowedRoles, true)) {
             return view('livewire.approval-list')->with([
                 'approvals' => collect(),
             ]);
         }
 
-        // ✅ OPTIMASI: Query dengan pagination di database level
+        // ✅ OPTIMASI: Query dengan pagination di database level (menggunakan leftJoin agar data tidak hilang jika ada relasi kosong)
         $query = \App\Models\Request::query()
-            ->join('approvals', 'requests.approval_id', '=', 'approvals.id')
-            ->join('users', 'requests.requested_by', '=', 'users.id')
-            ->join('departments as requester_dept', 'users.dept_id', '=', 'requester_dept.id')
-            ->join('stocks', 'requests.reagent_id', '=', 'stocks.id')
-            ->join('departments as owner_dept', 'stocks.dept_owner_id', '=', 'owner_dept.id')
+            ->leftJoin('approvals', 'requests.approval_id', '=', 'approvals.id')
+            ->leftJoin('users', 'requests.requested_by', '=', 'users.id')
+            ->leftJoin('departments as requester_dept', 'users.dept_id', '=', 'requester_dept.id')
+            ->leftJoin('stocks', 'requests.reagent_id', '=', 'stocks.id')
+            ->leftJoin('departments as owner_dept', 'stocks.dept_owner_id', '=', 'owner_dept.id')
             ->select([
                 'requests.request_no',
                 'requests.created_at as request_date',
@@ -675,6 +679,23 @@ class ApprovalList extends Component
                 'stocks.quantity_uom',
                 'owner_dept.name as requested_to',
             ]);
+
+        // Filter berdasarkan status sesuai role:
+        // - Manager (role_id 2): hanya request berstatus 'waiting manager'
+        // - PIC (role_id 3): hanya request berstatus 'pending'
+        // - Super User (role_id 1): request berstatus 'pending' atau 'waiting manager'
+        if ($user->role_id == 2) {
+            $query->where('requests.status', 'waiting manager');
+        } elseif ($user->role_id == 3) {
+            $query->where('requests.status', 'pending');
+        } elseif ($user->role_id == 1) {
+            $query->whereIn('requests.status', ['pending', 'waiting manager']);
+        }
+
+        // Filter berdasarkan departemen jika user bukan Super User (role_id 1) dan memiliki dept_id
+        if ($user->role_id != 1 && ! empty($user->dept_id)) {
+            $query->where('stocks.dept_owner_id', $user->dept_id);
+        }
 
         // ✅ GLOBAL SEARCH - cari di semua kolom yang tampil
         if (! empty($this->search)) {

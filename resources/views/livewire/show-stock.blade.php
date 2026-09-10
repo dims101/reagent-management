@@ -77,7 +77,7 @@
                                     {{ floor($stock->remaining_qty) != $stock->remaining_qty
                                         ? number_format($stock->remaining_qty, 2, ',', '.')
                                         : number_format($stock->remaining_qty, 0, ',', '.') }}
-                                </td>
+                                </td> 
                                 <td>{{ $stock->quantity_uom }}</td>
                                 <td data-order="{{ $stock->expired_date }}" style="min-width: 80px;">
                                     {{ date('d-m-Y', strtotime($stock->expired_date)) }}
